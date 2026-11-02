@@ -108,8 +108,8 @@ export function BillingView() {
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <p className="font-heading text-xl font-bold">
-                  ${inv.amount.toLocaleString()}
+                <p className="text-xl font-bold tracking-tight tabular-nums">
+                  ${inv.amount.toLocaleString("en-US")}
                 </p>
                 {inv.status === "draft" ? (
                   <Button size="sm" variant="secondary" onClick={() => sendDraft(inv.id)}>
