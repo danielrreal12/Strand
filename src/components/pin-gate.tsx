@@ -59,13 +59,13 @@ export function PinGate({ onUnlock }: { onUnlock: () => void }) {
       <div className="rise-in w-full max-w-[400px]">
         <div className="mb-6 text-center sm:mb-10">
           <p className="font-heading text-[0.7rem] font-semibold tracking-[0.28em] text-primary">
-            STRAND · FIELD OPS
+            OPTIMUM · NODES
           </p>
           <h1 className="font-heading mt-3 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-            Strand
+            Optimum
           </h1>
           <p className="mx-auto mt-3 max-w-sm text-pretty text-muted-foreground">
-            Unlock the board for today’s splices, crew moves, and billing.
+            Unlock this week’s nodes, maps, and due dates.
           </p>
         </div>
 

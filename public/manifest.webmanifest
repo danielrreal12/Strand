@@ -1,7 +1,7 @@
 {
-  "name": "Strand Field Ops",
-  "short_name": "Strand",
-  "description": "Calendar, production, and billing for fiber splicing crews.",
+  "name": "Optimum Nodes",
+  "short_name": "Optimum",
+  "description": "Weekly production nodes with start, due date, maps, and coordinates.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

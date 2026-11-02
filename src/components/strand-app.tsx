@@ -20,7 +20,7 @@ export function StrandApp() {
       <div className="flex min-h-svh items-center justify-center">
         <FiberBg />
         <p className="font-heading text-sm tracking-[0.2em] text-muted-foreground">
-          STRAND
+          OPTIMUM
         </p>
       </div>
     );

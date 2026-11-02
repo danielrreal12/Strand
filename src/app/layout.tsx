@@ -27,14 +27,14 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Strand · Field Ops Control",
+  title: "Optimum Nodes",
   description:
-    "PIN-gated control board for fiber splicing crews — calendar, production, and billing.",
-  applicationName: "Strand",
+    "Weekly Optimum production nodes — start windows, due dates, maps, and coordinates.",
+  applicationName: "Optimum Nodes",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Strand",
+    title: "Optimum",
   },
   formatDetection: {
     telephone: false,

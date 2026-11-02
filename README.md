@@ -1,6 +1,6 @@
-# Strand — Field Ops Control
+# Optimum Nodes
 
-PIN-gated operations board for fiber splicing crews. Track the week’s jobs, log fusion quality, and keep invoices moving — without juggling three apps in the van.
+PIN-gated board for Optimum production. Each node pays $350. The Nodes tab holds the week from Anthoney: when you can start, the due date, the map, and coordinates.
 
 ## Features
 
