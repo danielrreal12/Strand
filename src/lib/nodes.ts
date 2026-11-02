@@ -24,10 +24,10 @@ export interface OptimumNode {
 export const PAY_PER_NODE = 350;
 
 const SOURCE =
-  "Anthoney Kugler · Fri, 30 Oct 2026 · Optimum Node Maps - Paige Communications Assignments Due 11/3";
+  "Anthoney Kugler · Thu, Oct 29, 2026, 6:46 PM CT · Optimum Node Maps - Paige Communications Assignments Due 11/3";
 
 /**
- * From the Oct 30 iCloud message. Anthoney did not give a separate start
+ * From the Oct 29 iCloud message (6:46 PM CT). Anthoney did not give a separate start
  * window, so the start column is the day they were assigned. GPS comes from
  * the attached map sheets. This is one email, not a full mailbox export.
  */
@@ -36,7 +36,7 @@ export const NODES: OptimumNode[] = [
     id: "b165a",
     node: "B165A",
     address: "3737 Golden Trl, College Station, TX 77845",
-    canStart: "Assigned Oct 30, 2026",
+    canStart: "Assigned Oct 29, 2026",
     due: "Nov 3, 2026",
     latitude: 30.631075,
     longitude: -96.261092,
@@ -50,7 +50,7 @@ export const NODES: OptimumNode[] = [
     id: "b210a",
     node: "B210A",
     address: "3122 Camelot Dr, Bryan, TX 77802",
-    canStart: "Assigned Oct 30, 2026",
+    canStart: "Assigned Oct 29, 2026",
     due: "Nov 3, 2026",
     latitude: 30.65711,
     longitude: -96.33818,

@@ -2,7 +2,7 @@
 
 Board for the Optimum production week. Each node pays $350.
 
-The current rows are from Anthoney Kugler’s Oct 30, 2026 iCloud message, “Optimum Node Maps - Paige Communications Assignments Due 11/3.” That archive is one email and two map sheets, not a full mailbox export. Anthoney did not write a separate start window, so the start column is the assignment date. GPS coordinates are printed on the map sheets.
+The current rows are from Anthoney Kugler’s iCloud message sent Thursday, Oct 29, 2026, 6:46 PM CT, “Optimum Node Maps - Paige Communications Assignments Due 11/3.” That archive is one email and two map sheets, not a full mailbox export. Anthoney did not write a separate start window, so the start column is the assignment date. GPS coordinates are printed on the map sheets.
 
 ## Run locally
 

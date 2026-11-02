@@ -69,7 +69,7 @@ export function NodesView() {
           This week’s nodes
         </h2>
         <p className="mt-1 max-w-xl text-muted-foreground">
-          ${PAY_PER_NODE} a node. From Anthoney Kugler’s Oct 30 iCloud mail.
+          ${PAY_PER_NODE} a node. From Anthoney Kugler’s Oct 29 iCloud mail (6:46 PM CT).
           Both nodes are due Nov 3. This archive is one email, not the whole mailbox.
         </p>
       </header>
