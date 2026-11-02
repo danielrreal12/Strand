@@ -1,22 +1,35 @@
 "use client";
 
 import { useState } from "react";
-import { crewByPin, writeSession, type CrewName } from "@/lib/splicer";
+import type { CrewName, CrewRole } from "@/lib/splicer";
 
-export function PinGate({ onUnlock }: { onUnlock: (person: CrewName) => void }) {
+export function PinGate({ onUnlock }: { onUnlock: (person: CrewName, role: CrewRole) => void }) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
 
-  function submit(event: React.FormEvent) {
+  async function submit(event: React.FormEvent) {
     event.preventDefault();
-    const member = crewByPin(pin);
-    if (member) {
-      writeSession(member.id);
-      onUnlock(member.id);
-      return;
+    setPending(true);
+    setError("");
+    try {
+      const response = await fetch("/api/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin }),
+      });
+      const data = (await response.json().catch(() => ({}))) as { id?: CrewName; role?: CrewRole; error?: string };
+      if (!response.ok || !data.id || !data.role) {
+        setError(data.error || "Wrong access code.");
+        setPin("");
+        return;
+      }
+      onUnlock(data.id, data.role);
+    } catch {
+      setError("Couldn’t reach the sign-in. Try again.");
+    } finally {
+      setPending(false);
     }
-    setError("Wrong PIN.");
-    setPin("");
   }
 
   return (
@@ -24,7 +37,7 @@ export function PinGate({ onUnlock }: { onUnlock: (person: CrewName) => void }) 
       <main className="pin-card">
         <small>OPTIMUM · PAIGE</small>
         <h1>Welcome to Splicer</h1>
-        <p>Enter your access code to open the calendar, your route, and your billing.</p>
+        <p>Enter your access code. Today’s route opens first.</p>
         <form onSubmit={submit}>
           <label htmlFor="pin">Access code</label>
           <input
@@ -45,9 +58,11 @@ export function PinGate({ onUnlock }: { onUnlock: (person: CrewName) => void }) 
           <p id="pin-error" className="error" role="alert">
             {error}
           </p>
-          <button className="primary">Enter</button>
+          <button className="primary" disabled={pending}>
+            {pending ? "Checking…" : "Enter"}
+          </button>
         </form>
-        <footer>This device will remember access for 30 days.</footer>
+        <footer>This phone stays signed in for 7 days. Five wrong codes lock the sign-in for 15 minutes.</footer>
       </main>
     </div>
   );

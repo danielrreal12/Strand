@@ -20,6 +20,7 @@ import {
   writeStoredNodes,
   type CalendarMode,
   type CrewName,
+  type CrewRole,
   type RoutePlan,
   type SplicerNode,
   type TabId,
@@ -29,6 +30,7 @@ type BatchMode = "complete" | "schedule" | "payment" | "received";
 
 type SplicerState = {
   person: CrewName;
+  role: CrewRole;
   nodes: SplicerNode[];
   today: string;
   tab: TabId;
@@ -70,6 +72,7 @@ type SplicerState = {
   saveChanges: (codes: string[], changes: Partial<SplicerNode>) => void;
   routePlans: Record<string, RoutePlan>;
   saveRoute: (plan: RoutePlan) => void;
+  replaceRecords: (nodes: SplicerNode[], routes: Record<string, RoutePlan>) => void;
   routeMode: "team" | "individual";
   setRouteMode: (mode: "team" | "individual") => void;
   lock: () => void;
@@ -84,10 +87,10 @@ export function useSplicer() {
   return value;
 }
 
-export function SplicerProvider({ person, children, onLock }: { person: CrewName; children: ReactNode; onLock: () => void }) {
+export function SplicerProvider({ person, role, children, onLock }: { person: CrewName; role: CrewRole; children: ReactNode; onLock: () => void }) {
   const [nodes, setNodes] = useState<SplicerNode[]>(() => readStoredNodes());
   const [today, setToday] = useState(() => chicagoToday());
-  const [tab, setTab] = useState<TabId>("calendar");
+  const [tab, setTab] = useState<TabId>("today");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [calendarMode, setCalendarMode] = useState<CalendarMode>("scheduled");
@@ -107,6 +110,10 @@ export function SplicerProvider({ person, children, onLock }: { person: CrewName
   const [routePlans, setRoutePlans] = useState<Record<string, RoutePlan>>(() => readRoutePlans());
   const [routeMode, setRouteMode] = useState<"team" | "individual">("team");
   const followedAnchor = useRef("");
+  const booted = useRef(false);
+  const syncRef = useRef<(nodes: SplicerNode[], routes: Record<string, RoutePlan>) => Promise<{ nodes?: SplicerNode[]; routes?: Record<string, RoutePlan> }>>(async () => ({}));
+  const applyRef = useRef<(data: { nodes?: SplicerNode[]; routes?: Record<string, RoutePlan> }) => void>(() => undefined);
+  const lockRef = useRef(onLock);
 
   const anchor = useMemo(() => agendaAnchor(nodes, today), [nodes, today]);
 
@@ -146,26 +153,89 @@ export function SplicerProvider({ person, children, onLock }: { person: CrewName
     });
   }, []);
 
+  const applyRemote = useCallback((data: { nodes?: SplicerNode[]; routes?: Record<string, RoutePlan> }) => {
+    if (data.nodes?.length) {
+      setNodes(data.nodes);
+      writeStoredNodes(data.nodes);
+    }
+    if (data.routes) {
+      setRoutePlans(data.routes);
+      writeRoutePlans(data.routes);
+    }
+  }, []);
+
+  const syncRecords = useCallback(
+    async (nextNodes: SplicerNode[], nextRoutes: Record<string, RoutePlan>) => {
+      writeStoredNodes(nextNodes);
+      writeRoutePlans(nextRoutes);
+      const response = await fetch("/api/records", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nodes: nextNodes, routes: nextRoutes }),
+      });
+      if (response.status === 401) {
+        onLock();
+        throw new Error("Sign in again.");
+      }
+      const data = (await response.json().catch(() => ({}))) as { error?: string; nodes?: SplicerNode[]; routes?: Record<string, RoutePlan> };
+      if (!response.ok) throw new Error(data.error || "Saved on this phone. The backup didn’t update.");
+      return data;
+    },
+    [onLock],
+  );
+
+  syncRef.current = syncRecords;
+  applyRef.current = applyRemote;
+  lockRef.current = onLock;
+
+  useEffect(() => {
+    if (booted.current) return;
+    booted.current = true;
+    const localNodes = readStoredNodes();
+    const localRoutes = readRoutePlans();
+    void fetch("/api/records")
+      .then(async (response) => {
+        if (response.status === 401) {
+          lockRef.current();
+          return;
+        }
+        if (!response.ok) return;
+        const data = (await response.json()) as { updatedAt?: string | null; nodes?: SplicerNode[]; routes?: Record<string, RoutePlan> };
+        if (data.updatedAt && data.nodes?.length) {
+          applyRef.current(data);
+          return;
+        }
+        const saved = await syncRef.current(localNodes, localRoutes);
+        applyRef.current(saved);
+      })
+      .catch(() => undefined);
+  }, []);
+
   const saveChanges = useCallback(
     (codes: string[], changes: Partial<SplicerNode>) => {
       setSaving(true);
       setError("");
-      try {
-        if (!codes.length) throw new Error("Select at least one node.");
-        const next = nodes.map((node) => (codes.includes(node.code) ? { ...node, ...changes } : node));
-        writeStoredNodes(next);
-        setNodes(next);
-        setEditing(null);
-        setBatchOpen(false);
-        setSelectedCodes([]);
-        showToast("Changes saved");
-      } catch (caught) {
-        setError(caught instanceof Error ? caught.message : "Couldn’t save");
-      } finally {
+      if (!codes.length) {
+        setError("Select at least one node.");
         setSaving(false);
+        return;
       }
+      const next = nodes.map((node) => (codes.includes(node.code) ? { ...node, ...changes } : node));
+      setNodes(next);
+      setEditing(null);
+      setBatchOpen(false);
+      setSelectedCodes([]);
+      void syncRecords(next, routePlans)
+        .then((data) => {
+          applyRemote(data);
+          showToast("Changes saved");
+        })
+        .catch((caught) => {
+          setError(caught instanceof Error ? caught.message : "Couldn’t save");
+        })
+        .finally(() => setSaving(false));
     },
-    [nodes, showToast],
+    [applyRemote, nodes, routePlans, showToast, syncRecords],
   );
 
   const openBatch = useCallback(
@@ -186,24 +256,60 @@ export function SplicerProvider({ person, children, onLock }: { person: CrewName
     setSelectedCodes([]);
   }, []);
 
-  const saveRoute = useCallback((plan: RoutePlan) => {
-    setRoutePlans((current) => {
-      const next = { ...current, [plan.day]: plan };
-      writeRoutePlans(next);
-      return next;
-    });
-    showToast(plan.saved ? "Saved on this device" : "Preview updated");
-  }, [showToast]);
+  const saveRoute = useCallback(
+    (plan: RoutePlan) => {
+      if (role !== "admin") {
+        showToast("Daniel saves the day’s split");
+        return;
+      }
+      const next = { ...routePlans, [plan.day]: plan };
+      setRoutePlans(next);
+      void syncRecords(nodes, next)
+        .then((data) => {
+          applyRemote(data);
+          showToast(plan.saved ? "Saved, and backed up" : "Preview updated");
+        })
+        .catch((caught) => setError(caught instanceof Error ? caught.message : "Couldn’t save the route"));
+    },
+    [applyRemote, nodes, role, routePlans, showToast, syncRecords],
+  );
+
+  const replaceRecords = useCallback(
+    (nextNodes: SplicerNode[], nextRoutes: Record<string, RoutePlan>) => {
+      setNodes(nextNodes);
+      setRoutePlans(nextRoutes);
+      writeStoredNodes(nextNodes);
+      writeRoutePlans(nextRoutes);
+    },
+    [],
+  );
 
   const refresh = useCallback(() => {
-    setNodes(readStoredNodes());
     setToday(chicagoToday());
-    setRoutePlans(readRoutePlans());
-    showToast("Information updated");
-  }, [showToast]);
+    void fetch("/api/records")
+      .then(async (response) => {
+        if (response.status === 401) {
+          onLock();
+          return;
+        }
+        if (!response.ok) {
+          showToast("Couldn’t refresh");
+          return;
+        }
+        const data = (await response.json()) as { updatedAt?: string | null; nodes?: SplicerNode[]; routes?: Record<string, RoutePlan> };
+        if (data.updatedAt && data.nodes?.length) applyRemote(data);
+        else {
+          setNodes(readStoredNodes());
+          setRoutePlans(readRoutePlans());
+        }
+        showToast("Information updated");
+      })
+      .catch(() => showToast("Couldn’t refresh"));
+  }, [applyRemote, onLock, showToast]);
 
   const lock = useCallback(() => {
     clearSession();
+    void fetch("/api/session", { method: "DELETE" });
     onLock();
   }, [onLock]);
 
@@ -213,6 +319,7 @@ export function SplicerProvider({ person, children, onLock }: { person: CrewName
 
   const value: SplicerState = {
     person,
+    role,
     nodes,
     today,
     tab,
@@ -254,6 +361,7 @@ export function SplicerProvider({ person, children, onLock }: { person: CrewName
     saveChanges,
     routePlans,
     saveRoute,
+    replaceRecords,
     routeMode,
     setRouteMode,
     lock,

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ChevronLeft, ChevronRight, MapPin, Radio } from "lucide-react";
 import { NodeNotices } from "./notices";
 import { useSplicer } from "./provider";
@@ -7,6 +8,7 @@ import {
   PAY_PER_NODE,
   STATUS_LABEL,
   activeNodes,
+  addDays,
   calendarHelp,
   formatLong,
   formatMonth,
@@ -17,6 +19,7 @@ import {
   monthGrid,
   placedOn,
   urgency,
+  weekBounds,
   type CalendarMode,
 } from "@/lib/splicer";
 
@@ -24,11 +27,10 @@ export function WeekCharts() {
   const { nodes, today } = useSplicer();
   const active = activeNodes(nodes);
   const completed = active.filter((node) => node.status === "completed");
+  const bounds = weekBounds(today);
   const monday = mondayOf(today);
-  const mondayIso = isoFromDate(monday);
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  const sundayIso = isoFromDate(sunday);
+  const mondayIso = bounds.start;
+  const sundayIso = bounds.end;
   const days = Array.from({ length: 5 }, (_, index) => {
     const date = new Date(monday);
     date.setDate(monday.getDate() + index);
@@ -52,7 +54,7 @@ export function WeekCharts() {
         <div className="panel-heading">
           <div>
             <h2>Nodes completed by day</h2>
-            <p>This week’s production · {total} nodes</p>
+            <p>This week only · {formatShort(mondayIso)}–{formatShort(sundayIso)} · {total} finished. All-time is the other number.</p>
           </div>
         </div>
         <div className="bar-chart" role="img" aria-label="Nodes completed by day this week">
@@ -94,10 +96,13 @@ export function WeekCharts() {
 
 export function CalendarView() {
   const splicer = useSplicer();
+  const [span, setSpan] = useState<"week" | "month">("week");
   const active = activeNodes(splicer.nodes);
   const open = active.filter((node) => node.status !== "completed");
   const missing = active.filter((node) => !node.map);
   const cells = monthGrid(splicer.month);
+  const weekStart = isoFromDate(mondayOf(splicer.selectedDay));
+  const weekDays = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
   const agenda = active
     .filter((node) => placedOn(node, splicer.calendarMode, splicer.anchor) === splicer.selectedDay)
     .sort((a, b) => Number(a.status === "completed") - Number(b.status === "completed") || (a.due || "9999").localeCompare(b.due || "9999") || a.code.localeCompare(b.code));
@@ -107,12 +112,34 @@ export function CalendarView() {
       <section className="panel calendar">
         <div className="calendar-toolbar">
           <div className="month">
-            <h2>{formatMonth(splicer.month)}</h2>
+            <h2>{span === "week" ? `${formatShort(weekStart)} – ${formatShort(addDays(weekStart, 6))}` : formatMonth(splicer.month)}</h2>
             <div>
-              <button aria-label="Previous month" onClick={() => splicer.setMonth(new Date(splicer.month.getFullYear(), splicer.month.getMonth() - 1, 1))}>
+              <button
+                aria-label={span === "week" ? "Previous week" : "Previous month"}
+                onClick={() => {
+                  if (span === "week") {
+                    const next = addDays(splicer.selectedDay, -7);
+                    splicer.setSelectedDay(next);
+                    splicer.setMonth(new Date(`${next}T12:00:00`));
+                    return;
+                  }
+                  splicer.setMonth(new Date(splicer.month.getFullYear(), splicer.month.getMonth() - 1, 1));
+                }}
+              >
                 <ChevronLeft size={17} />
               </button>
-              <button aria-label="Next month" onClick={() => splicer.setMonth(new Date(splicer.month.getFullYear(), splicer.month.getMonth() + 1, 1))}>
+              <button
+                aria-label={span === "week" ? "Next week" : "Next month"}
+                onClick={() => {
+                  if (span === "week") {
+                    const next = addDays(splicer.selectedDay, 7);
+                    splicer.setSelectedDay(next);
+                    splicer.setMonth(new Date(`${next}T12:00:00`));
+                    return;
+                  }
+                  splicer.setMonth(new Date(splicer.month.getFullYear(), splicer.month.getMonth() + 1, 1));
+                }}
+              >
                 <ChevronRight size={17} />
               </button>
             </div>
@@ -124,6 +151,12 @@ export function CalendarView() {
               }}
             >
               Today
+            </button>
+            <button className={span === "week" ? "primary span-toggle" : "text-button span-toggle"} type="button" onClick={() => setSpan("week")}>
+              Week
+            </button>
+            <button className={span === "month" ? "primary span-toggle" : "text-button span-toggle"} type="button" onClick={() => setSpan("month")}>
+              Month
             </button>
           </div>
           <select aria-label="Date type" value={splicer.calendarMode} onChange={(event) => splicer.setCalendarMode(event.target.value as CalendarMode)}>
@@ -150,6 +183,22 @@ export function CalendarView() {
           ) : null}
         </div>
         <div className="calendar-help">{calendarHelp(splicer.calendarMode)}</div>
+        {span === "week" ? (
+          <div className="week-days" role="list">
+            {weekDays.map((iso) => {
+              const date = new Date(`${iso}T12:00:00`);
+              const count = active.filter((node) => placedOn(node, splicer.calendarMode, splicer.anchor) === iso).length;
+              return (
+                <button key={iso} type="button" className={iso === splicer.selectedDay ? "selected" : iso === splicer.today ? "is-today" : ""} onClick={() => splicer.setSelectedDay(iso)}>
+                  <small>{date.toLocaleDateString("en-US", { weekday: "short" })}</small>
+                  <strong>{date.getDate()}</strong>
+                  <span>{count || ""}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+        <>
         <div className="weekdays">
           {"Mon Tue Wed Thu Fri Sat Sun".split(" ").map((day) => (
             <span key={day}>{day}</span>
@@ -202,6 +251,8 @@ export function CalendarView() {
             );
           })}
         </div>
+        </>
+        )}
         <div className="legend">
           <span>
             <i />
@@ -285,12 +336,19 @@ export function CalendarView() {
             </div>
           )}
         </div>
-        <div className="agenda-total">
-          <span>{splicer.calendarMode === "payment" ? "Expected pay" : "Node value"}</span>
-          <strong>
-            {money(agenda.length * PAY_PER_NODE)} <small>USD</small>
-          </strong>
-        </div>
+        {splicer.person === "Chris" ? (
+          <div className="agenda-total">
+            <span>Stops this day</span>
+            <strong>{agenda.length}</strong>
+          </div>
+        ) : (
+          <div className="agenda-total">
+            <span>{splicer.calendarMode === "payment" ? "Expected pay" : "Node value"}</span>
+            <strong>
+              {money(agenda.length * PAY_PER_NODE)} <small>USD</small>
+            </strong>
+          </div>
+        )}
       </section>
     </div>
   );

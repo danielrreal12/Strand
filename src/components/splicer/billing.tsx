@@ -36,7 +36,63 @@ export function BillingView() {
   }, {});
   const detail = completed;
 
+  async function downloadBackup() {
+    const response = await fetch("/api/backup");
+    if (!response.ok) {
+      splicer.showToast("Couldn’t download the backup");
+      return;
+    }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `optimum-backup-${splicer.today}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function restoreBackup(file: File) {
+    const raw = await file.text();
+    const response = await fetch("/api/backup", { method: "POST", headers: { "Content-Type": "application/json" }, body: raw });
+    const data = (await response.json().catch(() => ({}))) as { error?: string; nodes?: typeof splicer.nodes; routes?: typeof splicer.routePlans };
+    if (!response.ok || !data.nodes) {
+      splicer.showToast(data.error || "Couldn’t restore that file");
+      return;
+    }
+    splicer.replaceRecords(data.nodes, data.routes ?? {});
+    splicer.showToast("Backup restored");
+  }
+
   return (
+    <>
+    <section className="panel records-panel">
+      {splicer.role === "admin" ? (
+        <>
+          <div>
+            <h2>Protect the records</h2>
+            <p>Each save updates the server copy. Download a backup you keep. Only your sign-in can restore it.</p>
+          </div>
+          <button className="primary" type="button" onClick={() => void downloadBackup()}>
+            Download backup
+          </button>
+          <label className="text-button file-button">
+            Restore backup
+            <input
+              type="file"
+              accept="application/json,.json"
+              hidden
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (file) void restoreBackup(file);
+              }}
+            />
+          </label>
+        </>
+      ) : (
+        <p>You can log the nodes you finished. Daniel confirms payment dates, invoices, and backups.</p>
+      )}
+    </section>
     <div className="billing-grid">
       <section className="panel weekly-billing">
         <div className="panel-heading">
@@ -278,5 +334,6 @@ export function BillingView() {
         <div className="table-foot">Payments are confirmed manually.</div>
       </section>
     </div>
+    </>
   );
 }

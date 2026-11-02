@@ -531,6 +531,237 @@ html[data-theme="dark"] .bar-column i {
   background: linear-gradient(#e0b089, #6d8eb8);
 }
 
+.today-layout {
+  display: grid;
+  gap: 16px;
+}
+
+.next-stop {
+  display: grid;
+  gap: 8px;
+  padding: 22px;
+}
+
+.next-stop h2 {
+  margin: 0;
+  font-size: 40px;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.next-stop p,
+.next-meta {
+  margin: 0;
+  color: var(--muted);
+}
+
+.navigate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 54px;
+  margin-top: 8px;
+  border-radius: 12px;
+  background: var(--navy);
+  color: #f7f4ef;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.next-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+}
+
+.next-actions a,
+.next-actions button {
+  color: var(--navy);
+  background: none;
+  border: 0;
+  padding: 0;
+  font-weight: 650;
+}
+
+.today-map {
+  width: fit-content;
+  margin-top: 8px;
+}
+
+.stop-list {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0 18px 18px;
+}
+
+.stop-list li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 36px;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.stop-list li.is-next {
+  border-color: var(--copper);
+}
+
+.stop-list li.is-done {
+  opacity: 0.55;
+}
+
+.stop-list li > span:first-child {
+  font-weight: 700;
+}
+
+.stop-list button {
+  display: grid;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+}
+
+.stop-list small {
+  color: var(--muted);
+}
+
+.stop-list a {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: var(--navy);
+  background: var(--lime);
+}
+
+.week-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  padding: 0 18px 8px;
+}
+
+.week-days button {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  min-height: 68px;
+  padding: 8px 2px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+}
+
+.week-days button.selected {
+  border-color: var(--navy);
+  background: var(--lime);
+}
+
+.week-days button.is-today strong {
+  color: var(--copper);
+}
+
+.week-days small,
+.week-days span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.span-toggle {
+  min-height: 34px;
+  padding: 6px 10px;
+}
+
+fieldset.form-grid {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.records-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 18px 22px;
+}
+
+.records-panel h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.records-panel p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.records-panel > div {
+  flex: 1;
+  min-width: 220px;
+}
+
+.file-button {
+  position: relative;
+}
+
+html[data-theme="dark"] .navigate {
+  background: #e0b089;
+  color: #1a120c;
+}
+
+html[data-theme="dark"] .next-actions a,
+html[data-theme="dark"] .next-actions button,
+html[data-theme="dark"] .stop-list a {
+  color: #e0b089;
+  background: #243652;
+}
+
+html[data-theme="dark"] .stop-list li,
+html[data-theme="dark"] .week-days button {
+  background: #18263c;
+}
+
+html[data-theme="dark"] .week-days button.selected {
+  background: #243652;
+  border-color: #e0b089;
+}
+
+@media (max-width: 650px) {
+  .shell nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .shell nav button {
+    font-size: 10px;
+    gap: 2px;
+    padding-inline: 2px;
+  }
+
+  .next-stop h2 {
+    font-size: 34px;
+  }
+
+  .week-days {
+    padding-inline: 12px;
+  }
+}
+
 @media (max-width: 650px) {
   html[data-theme="dark"] aside {
     background: #152033f5;

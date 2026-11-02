@@ -46,9 +46,13 @@ export function Modals() {
 function NodeModal({ node }: { node: SplicerNode }) {
   const splicer = useSplicer();
   const setNode = splicer.setEditing;
+  const admin = splicer.role === "admin";
+  const saved = splicer.nodes.find((item) => item.code === node.code) ?? node;
+  const locked = !admin && saved.status === "completed" && Boolean(saved.completedBy) && saved.completedBy !== splicer.person;
 
   function save(event: React.FormEvent) {
     event.preventDefault();
+    if (locked) return;
     if (node.status === "completed" && !node.completed) {
       splicer.setError("The completion date is required.");
       return;
@@ -57,16 +61,16 @@ function NodeModal({ node }: { node: SplicerNode }) {
       status: node.status,
       completed: node.completed,
       scheduled: node.scheduled,
-      payDate: node.payDate,
-      paidDate: node.paidDate,
+      payDate: admin ? node.payDate : saved.payDate,
+      paidDate: admin ? node.paidDate : saved.paidDate,
       notes: node.notes,
-      invoice: node.invoice,
-      job: node.job,
-      invoiceStatus: node.invoiceStatus,
-      address: node.address,
+      invoice: admin ? node.invoice : saved.invoice,
+      job: admin ? node.job : saved.job,
+      invoiceStatus: admin ? node.invoiceStatus : saved.invoiceStatus,
+      address: admin ? node.address : saved.address,
       reviewStatus: node.reviewStatus,
-      billingIncluded: node.billingIncluded,
-      completedBy: node.completedBy || "",
+      billingIncluded: admin ? node.billingIncluded : saved.billingIncluded,
+      completedBy: admin ? node.completedBy || "" : node.status === "completed" ? splicer.person : "",
     });
   }
 
@@ -126,8 +130,14 @@ function NodeModal({ node }: { node: SplicerNode }) {
           Start: {formatShort(node.start)} · Due: {formatShort(node.due)} {node.night ? "· Night only 00:00–06:00" : ""}
         </div>
         <form onSubmit={save}>
-          <p className="production-rule">Mark a node complete only from a confirmed production report.</p>
-          <div className="form-grid">
+          <p className="production-rule">
+            {locked
+              ? `This completion belongs to ${saved.completedBy}. Payment records stay with Daniel.`
+              : admin
+                ? "Mark a node complete only from a confirmed production report."
+                : "You can log your own completion. Payment dates and invoices stay with Daniel."}
+          </p>
+          <fieldset className="form-grid" disabled={locked}>
             <label>
               Status
               <select
@@ -155,18 +165,22 @@ function NodeModal({ node }: { node: SplicerNode }) {
             </label>
             <label>
               Completed by
-              <select
-                value={node.completedBy || ""}
-                onChange={(event) => setNode({ ...node, completedBy: event.target.value as CrewName | "" })}
-              >
-                <option value="">Not recorded</option>
-                {CREW_MEMBERS.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.name}
-                  </option>
-                ))}
-              </select>
-              {splicer.person === "Chris" ? null : (
+              {admin ? (
+                <select
+                  value={node.completedBy || ""}
+                  onChange={(event) => setNode({ ...node, completedBy: event.target.value as CrewName | "" })}
+                >
+                  <option value="">Not recorded</option>
+                  {CREW_MEMBERS.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input readOnly value={splicer.person} />
+              )}
+              {splicer.person === "Chris" || !admin ? null : (
                 <small>Daniel and Iván split each day’s $350 nodes in half. Chris is paid $300 for his own nodes.</small>
               )}
             </label>
@@ -174,41 +188,45 @@ function NodeModal({ node }: { node: SplicerNode }) {
               Completion date
               <input type="date" disabled={node.status !== "completed"} required={node.status === "completed"} value={node.completed} onChange={(event) => setNode({ ...node, completed: event.target.value })} />
             </label>
-            <label>
-              Expected pay
-              <input type="date" disabled={node.status !== "completed"} min={node.completed || undefined} value={node.payDate} onChange={(event) => setNode({ ...node, payDate: event.target.value })} />
-            </label>
-            <label>
-              Payment received (confirmed)
-              <input type="date" disabled={node.status !== "completed"} min={node.completed || undefined} value={node.paidDate} onChange={(event) => setNode({ ...node, paidDate: event.target.value })} />
-            </label>
-            <label>
-              Invoice status
-              <select value={node.invoiceStatus} onChange={(event) => setNode({ ...node, invoiceStatus: event.target.value as InvoiceStatus })}>
-                <option value="pending">Pending</option>
-                <option value="sent">Sent</option>
-                <option value="approved">Approved</option>
-              </select>
-            </label>
-            <label>
-              Invoice number
-              <input value={node.invoice} onChange={(event) => setNode({ ...node, invoice: event.target.value })} />
-            </label>
+            {admin ? (
+              <>
+                <label>
+                  Expected pay
+                  <input type="date" disabled={node.status !== "completed"} min={node.completed || undefined} value={node.payDate} onChange={(event) => setNode({ ...node, payDate: event.target.value })} />
+                </label>
+                <label>
+                  Payment received (confirmed)
+                  <input type="date" disabled={node.status !== "completed"} min={node.completed || undefined} value={node.paidDate} onChange={(event) => setNode({ ...node, paidDate: event.target.value })} />
+                </label>
+                <label>
+                  Invoice status
+                  <select value={node.invoiceStatus} onChange={(event) => setNode({ ...node, invoiceStatus: event.target.value as InvoiceStatus })}>
+                    <option value="pending">Pending</option>
+                    <option value="sent">Sent</option>
+                    <option value="approved">Approved</option>
+                  </select>
+                </label>
+                <label>
+                  Invoice number
+                  <input value={node.invoice} onChange={(event) => setNode({ ...node, invoice: event.target.value })} />
+                </label>
+                <label>
+                  Include in billing
+                  <select value={node.billingIncluded === false ? "no" : "yes"} onChange={(event) => setNode({ ...node, billingIncluded: event.target.value === "yes" })}>
+                    <option value="yes">Yes, billable</option>
+                    <option value="no">No, out of billing</option>
+                  </select>
+                  <small>Completed nodes kept out of billing stay on the production record. Completed nodes drop off the route.</small>
+                </label>
+              </>
+            ) : null}
             <label>
               Wise Job #
-              <input value={node.job} onChange={(event) => setNode({ ...node, job: event.target.value })} />
+              <input readOnly={!admin} value={node.job} onChange={(event) => setNode({ ...node, job: event.target.value })} />
             </label>
             <label className="wide">
               Address / reference
-              <input value={node.address} onChange={(event) => setNode({ ...node, address: event.target.value })} />
-            </label>
-            <label>
-              Include in billing
-              <select value={node.billingIncluded === false ? "no" : "yes"} onChange={(event) => setNode({ ...node, billingIncluded: event.target.value === "yes" })}>
-                <option value="yes">Yes, billable</option>
-                <option value="no">No, out of billing</option>
-              </select>
-              <small>Completed nodes kept out of billing stay on the production record. Completed nodes drop off the route.</small>
+              <input readOnly={!admin} value={node.address} onChange={(event) => setNode({ ...node, address: event.target.value })} />
             </label>
             <label className="wide">
               Follow-up
@@ -223,7 +241,7 @@ function NodeModal({ node }: { node: SplicerNode }) {
               Notes
               <textarea rows={4} value={node.notes} onChange={(event) => setNode({ ...node, notes: event.target.value })} />
             </label>
-          </div>
+          </fieldset>
           {splicer.error ? (
             <p className="form-error" role="alert">
               {splicer.error}
@@ -231,8 +249,8 @@ function NodeModal({ node }: { node: SplicerNode }) {
           ) : null}
           <div className="modal-footer">
             <span>{REVIEW_LABEL[node.reviewStatus] || "No note"}</span>
-            <button className="primary" type="submit" disabled={splicer.saving}>
-              {splicer.saving ? "Saving…" : "Save changes"}
+            <button className="primary" type="submit" disabled={splicer.saving || locked}>
+              {splicer.saving ? "Saving…" : locked ? "Locked" : "Save changes"}
             </button>
           </div>
         </form>
@@ -256,11 +274,12 @@ function BatchModal() {
       splicer.saveChanges(splicer.selectedCodes, {
         status: "completed",
         completed: splicer.batchDate,
-        completedBy: splicer.batchPerson,
-        ...(splicer.batchPay ? { payDate: splicer.batchPay } : {}),
+        completedBy: splicer.role === "admin" ? splicer.batchPerson : splicer.person,
+        ...(splicer.role === "admin" && splicer.batchPay ? { payDate: splicer.batchPay } : {}),
       });
       return;
     }
+    if (splicer.role !== "admin") return;
     if (splicer.batchMode === "payment") {
       splicer.saveChanges(splicer.selectedCodes, { payDate: splicer.batchDate });
       return;
@@ -291,8 +310,8 @@ function BatchModal() {
               <select value={splicer.batchMode} onChange={(event) => splicer.setBatchMode(event.target.value as typeof splicer.batchMode)}>
                 <option value="complete">Nodes completed</option>
                 <option value="schedule">Schedule work</option>
-                <option value="payment">Expected pay date</option>
-                <option value="received">Payment received and confirmed</option>
+                {splicer.role === "admin" ? <option value="payment">Expected pay date</option> : null}
+                {splicer.role === "admin" ? <option value="received">Payment received and confirmed</option> : null}
               </select>
             </label>
             <label>
@@ -301,20 +320,26 @@ function BatchModal() {
             </label>
             {splicer.batchMode === "complete" ? (
               <>
-                <label>
-                  Completed by
-                  <select value={splicer.batchPerson} onChange={(event) => splicer.setBatchPerson(event.target.value as CrewName)}>
-                    {CREW_MEMBERS.map((member) => (
-                      <option key={member.id} value={member.id}>
-                        {member.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Expected pay (optional)
-                  <input type="date" min={splicer.batchDate} value={splicer.batchPay} onChange={(event) => splicer.setBatchPay(event.target.value)} />
-                </label>
+                {splicer.role === "admin" ? (
+                  <>
+                    <label>
+                      Completed by
+                      <select value={splicer.batchPerson} onChange={(event) => splicer.setBatchPerson(event.target.value as CrewName)}>
+                        {CREW_MEMBERS.map((member) => (
+                          <option key={member.id} value={member.id}>
+                            {member.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Expected pay (optional)
+                      <input type="date" min={splicer.batchDate} value={splicer.batchPay} onChange={(event) => splicer.setBatchPay(event.target.value)} />
+                    </label>
+                  </>
+                ) : (
+                  <p className="production-rule">These nodes are saved under your name. Daniel confirms the pay date.</p>
+                )}
               </>
             ) : null}
           </div>

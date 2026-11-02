@@ -1,8 +1,9 @@
 import { connection } from "next/server";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { currentSession } from "@/lib/session.server";
 
-const MAPS_DIR = path.join(process.cwd(), "public", "maps");
+const MAPS_DIR = path.join(process.cwd(), "private", "maps");
 
 function safeName(name: string) {
   const base = path.basename(name);
@@ -12,6 +13,7 @@ function safeName(name: string) {
 
 export async function POST(request: Request) {
   await connection();
+  if (!(await currentSession())) return Response.json({ error: "Sign in to save maps." }, { status: 401 });
   const form = await request.formData();
   const files = form.getAll("files").filter((item): item is File => item instanceof File);
   if (!files.length || files.length > 20) {

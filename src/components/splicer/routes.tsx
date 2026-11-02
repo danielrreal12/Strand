@@ -211,10 +211,12 @@ function TeamRoute({ day, setDay, plan }: { day: string; setDay: (day: string) =
         <p className="route-help">Each route stays near itself. Unfinished stops from the day before stay at the front, then the nearest open nodes fill the list back to {STOPS_PER_DAY}. Dotted lines are the stop order. D, I, and C mark each person.</p>
       </div>
       <div className="panel team-status">
-        <strong>{plan.saved ? "Saved on this device" : "Preview · Not saved yet"}</strong>
+        <strong>{plan.saved ? "Saved for the crew" : "Preview · Not saved yet"}</strong>
         <p>
           {CREW.map((person) => `${person} ${plan[person].length}/${STOPS_PER_DAY}`).join(" · ")}. Open nodes still waiting: {splicer.nodes.filter((node) => node.status !== "completed" && node.status !== "excluded").length}.
         </p>
+        {splicer.role === "admin" ? (
+        <>
         <button className="primary" onClick={() => splicer.saveRoute({ ...plan, day, saved: true })}>
           Save this day’s split
         </button>
@@ -252,6 +254,10 @@ function TeamRoute({ day, setDay, plan }: { day: string; setDay: (day: string) =
             </button>
           </div>
         ) : null}
+        </>
+        ) : (
+          <p className="route-help">Daniel saves the day’s split. Your stops are on Today.</p>
+        )}
       </div>
       <div className="team-cards">
         <CrewCard title="Daniel" className="crew-card-daniel" nodes={daniel} />

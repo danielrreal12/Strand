@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
-import { billingPeriod, billingWeeks, buildDayRoute, crewByPin, mineNodes, personalTotal, routeForDay, seedNodesList, type SplicerNode } from "./splicer.ts";
+import { memberByPin } from "./crew.server.ts";
+import { judgeAttempt, readToken, signToken } from "./session.server.ts";
+import { billingPeriod, billingWeeks, buildDayRoute, mergeNodeEdit, mineNodes, personalTotal, presentNodes, routeForDay, seedNodesList, weekBounds, type SplicerNode } from "./splicer.ts";
 
 function sample(code: string, lat: number, lng: number, status: SplicerNode["status"] = "pending"): SplicerNode {
   return {
@@ -61,8 +64,51 @@ test("live board totals stay at 94 completed and $30,800 generated", () => {
   assert.equal(personalTotal(nodes, "Daniel"), 15400);
   assert.equal(personalTotal(nodes, "Iván"), 15400);
   assert.equal(personalTotal(nodes, "Chris"), 2400);
-  assert.equal(crewByPin("5796")?.id, "Daniel");
-  assert.equal(crewByPin("0000"), null);
+  assert.equal(memberByPin("5796")?.id, "Daniel");
+  assert.equal(memberByPin("6841")?.role, "splicer");
+  assert.equal(memberByPin("0000"), null);
+  assert.equal(readFileSync(new URL("./splicer.ts", import.meta.url), "utf8").includes("5796"), false);
+  assert.equal(weekBounds("2026-11-04").start, "2026-11-02");
+  assert.equal(weekBounds("2026-11-04").end, "2026-11-08");
+});
+
+test("splicers can log their own completion and cannot rewrite payment records", () => {
+  const previous = sample("B1", 30.6, -96.3);
+  previous.invoice = "101A";
+  previous.paidDate = "";
+  const incoming = { ...previous, status: "completed" as const, completed: "2026-11-02", completedBy: "Daniel" as const, payDate: "2026-11-13", paidDate: "2026-11-20", invoice: "HACK", notes: "done" };
+  const merged = mergeNodeEdit(previous, incoming, "splicer", "Iván");
+  assert.equal(merged.completedBy, "Iván");
+  assert.equal(merged.status, "completed");
+  assert.equal(merged.invoice, "101A");
+  assert.equal(merged.paidDate, "");
+  assert.equal(merged.payDate, "");
+  assert.equal(merged.notes, "done");
+
+  const locked = { ...previous, status: "completed" as const, completedBy: "Daniel" as const, completed: "2026-10-30", paidDate: "2026-11-01", notes: "keep" };
+  const untouched = mergeNodeEdit(locked, { ...locked, notes: "changed", paidDate: "" }, "splicer", "Iván");
+  assert.equal(untouched.notes, "keep");
+  assert.equal(untouched.paidDate, "2026-11-01");
+
+  const admin = mergeNodeEdit(previous, incoming, "admin", "Daniel");
+  assert.equal(admin.invoice, "HACK");
+  assert.equal(admin.completedBy, "Daniel");
+
+  const hidden = presentNodes([locked], "splicer", "Chris");
+  assert.equal(hidden[0]?.paidDate, "");
+  assert.equal(hidden[0]?.invoice, "");
+  assert.equal(presentNodes([locked], "admin", "Daniel")[0]?.paidDate, "2026-11-01");
+});
+
+test("a session token fails closed", () => {
+  const token = signToken({ id: "Chris", role: "splicer", exp: 5_000 }, "test-secret");
+  assert.equal(readToken(token, "test-secret", 1_000)?.id, "Chris");
+  assert.equal(readToken(token, "other-secret", 1_000), null);
+  assert.equal(readToken(token, "test-secret", 9_000), null);
+  let state = { fails: 0, lockedUntil: 0 };
+  for (let index = 0; index < 4; index += 1) state = judgeAttempt(state, false, 0).state;
+  assert.equal(judgeAttempt(state, false, 0).locked, true);
+  assert.equal(judgeAttempt({ fails: 2, lockedUntil: 0 }, true, 0).state.fails, 0);
 });
 
 test("each person gets at most six nearby stops, and unfinished stops stay first", () => {

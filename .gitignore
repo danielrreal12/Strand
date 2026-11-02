@@ -42,3 +42,7 @@ next-env.d.ts
 
 # Large Optimum map sheets cached on this machine
 /public/maps/*.pdf
+/private/maps/*.pdf
+
+# Server-side production records and session secret
+/.data/

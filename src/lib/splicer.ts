@@ -13,23 +13,20 @@ export type NodeStatus = "pending" | "progress" | "completed" | "excluded";
 export type InvoiceStatus = "pending" | "sent" | "approved";
 export type ReviewStatus = "" | "review_data" | "check_reassignment";
 export type CalendarMode = "scheduled" | "start" | "due" | "completed" | "payment";
-export type TabId = "calendar" | "nodes" | "routes" | "billing";
+export type TabId = "today" | "calendar" | "nodes" | "routes" | "billing";
 export type CrewName = "Daniel" | "Iván" | "Chris";
+export type CrewRole = "admin" | "splicer";
 
 export const CREW: CrewName[] = ["Daniel", "Iván", "Chris"];
 
-export const CREW_MEMBERS: { id: CrewName; name: string; initials: string; pin: string; role: string }[] = [
-  { id: "Daniel", name: "Daniel Villarreal", initials: "DV", pin: "5796", role: "Administrator · Private" },
-  { id: "Iván", name: "Iván", initials: "IV", pin: "6841", role: "Splicer · Private" },
-  { id: "Chris", name: "Chris", initials: "CH", pin: "9135", role: "Splicer · Private" },
+export const CREW_MEMBERS: { id: CrewName; name: string; initials: string; role: string }[] = [
+  { id: "Daniel", name: "Daniel Villarreal", initials: "DV", role: "Administrator · Private" },
+  { id: "Iván", name: "Iván", initials: "IV", role: "Splicer · Private" },
+  { id: "Chris", name: "Chris", initials: "CH", role: "Splicer · Private" },
 ];
 
 export function crewById(id: CrewName) {
   return CREW_MEMBERS.find((member) => member.id === id) ?? CREW_MEMBERS[0];
-}
-
-export function crewByPin(pin: string) {
-  return CREW_MEMBERS.find((member) => member.pin === pin) ?? null;
 }
 
 export type SplicerNode = {
@@ -313,6 +310,53 @@ export function mondayOf(iso: string) {
   const date = new Date(`${iso}T12:00:00`);
   date.setDate(date.getDate() - ((date.getDay() + 6) % 7));
   return date;
+}
+
+export function weekBounds(iso: string) {
+  const start = isoFromDate(mondayOf(iso));
+  return { start, end: addDays(start, 6) };
+}
+
+export function completedBetween(nodes: SplicerNode[], start: string, end: string) {
+  return activeNodes(nodes).filter((node) => node.status === "completed" && node.completed >= start && node.completed <= end);
+}
+
+export function driveTo(node: SplicerNode) {
+  const point = parseGps(node.gps);
+  if (!point) return "";
+  return `https://maps.apple.com/?daddr=${point.lat},${point.lng}&dirflg=d`;
+}
+
+export function googleDriveTo(node: SplicerNode) {
+  const point = parseGps(node.gps);
+  if (!point) return "";
+  return `https://www.google.com/maps/dir/?api=1&destination=${point.lat},${point.lng}&travelmode=driving`;
+}
+
+const PAYMENT_KEYS = ["payDate", "paidDate", "invoice", "invoiceStatus", "billingIncluded"] as const;
+
+export function mergeNodeEdit(previous: SplicerNode, incoming: SplicerNode, role: CrewRole, actor: CrewName): SplicerNode {
+  if (role === "admin") return { ...previous, ...incoming, code: previous.code };
+  if (previous.status === "completed" && previous.completedBy && previous.completedBy !== actor) return previous;
+  const next: SplicerNode = {
+    ...previous,
+    status: incoming.status,
+    scheduled: incoming.scheduled,
+    notes: incoming.notes,
+    reviewStatus: incoming.reviewStatus,
+    completed: incoming.status === "completed" ? incoming.completed : "",
+    completedBy: incoming.status === "completed" ? actor : "",
+  };
+  for (const key of PAYMENT_KEYS) next[key] = previous[key] as never;
+  return next;
+}
+
+export function presentNodes(nodes: SplicerNode[], role: CrewRole, person: CrewName) {
+  if (role === "admin") return nodes;
+  return nodes.map((node) => {
+    if (!node.completedBy || node.completedBy === person) return node;
+    return { ...node, payDate: "", paidDate: "", invoice: "", invoiceStatus: "pending" as const };
+  });
 }
 
 export function activeNodes(nodes: SplicerNode[]) {

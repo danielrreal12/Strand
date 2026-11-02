@@ -1,9 +1,10 @@
 import { connection } from "next/server";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { currentSession } from "@/lib/session.server";
 import { seedNodesList } from "@/lib/splicer";
 
-const MAPS_DIR = path.join(process.cwd(), "public", "maps");
+const MAPS_DIR = path.join(process.cwd(), "private", "maps");
 
 function safeName(name: string) {
   const base = path.basename(name);
@@ -44,6 +45,7 @@ async function pdfResponse(bytes: Uint8Array) {
 
 export async function GET(_request: Request, context: { params: Promise<{ file: string }> }) {
   await connection();
+  if (!(await currentSession())) return new Response("Sign in to open maps.", { status: 401 });
   const { file } = await context.params;
   const name = safeName(decodeURIComponent(file));
   const known = new Set(seedNodesList().map((node) => node.map).filter(Boolean));

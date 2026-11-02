@@ -11,6 +11,7 @@ import {
   Layers,
   MapPin,
   Moon,
+  Navigation,
   Plus,
   Radio,
   Receipt,
@@ -22,24 +23,29 @@ import {
 import {
   CHRIS_RATE,
   activeNodes,
+  completedBetween,
   crewById,
   downloadCsv,
+  formatShort,
   money,
   payableNodes,
   personalTotal,
+  weekBounds,
   type TabId,
 } from "@/lib/splicer";
 import { WeekCharts } from "./calendar";
 import { useSplicer } from "./provider";
 
 const NAV: { id: TabId; label: string; icon: typeof CalendarDays }[] = [
+  { id: "today", label: "Today", icon: Navigation },
   { id: "calendar", label: "Calendar", icon: CalendarDays },
   { id: "nodes", label: "Nodes", icon: Layers },
-  { id: "routes", label: "Map & route", icon: MapPin },
+  { id: "routes", label: "Route", icon: MapPin },
   { id: "billing", label: "Billing", icon: Receipt },
 ];
 
 const TABS: { id: TabId; label: string }[] = [
+  { id: "today", label: "Today" },
   { id: "calendar", label: "Calendar" },
   { id: "nodes", label: "All nodes" },
   { id: "routes", label: "Map & route" },
@@ -52,13 +58,21 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const active = activeNodes(splicer.nodes);
   const completed = active.filter((node) => node.status === "completed");
   const mine = payableNodes(splicer.nodes, splicer.person);
-  const receivable = mine.filter((node) => !node.paidDate);
   const paid = mine.filter((node) => node.paidDate);
   const partner = splicer.person !== "Chris";
   const open = active.filter((node) => node.status !== "completed");
   const progress = active.length ? (completed.length / active.length) * 100 : 0;
+  const bounds = weekBounds(splicer.today);
+  const weekDone = completedBetween(splicer.nodes, bounds.start, bounds.end);
+  const weekLabel = `${formatShort(bounds.start)}–${formatShort(bounds.end)}`;
   const titles: Record<TabId, [string, string]> = {
-    calendar: ["Your work, on the calendar.", "Plan the week. Log progress. See what's next."],
+    today: [
+      "Today's route.",
+      weekDone.length
+        ? `${weekDone.length} finished this week (${weekLabel}). ${completed.length} all time.`
+        : `0 finished this week (${weekLabel}). ${completed.length} all time, from earlier weeks.`,
+    ],
+    calendar: ["Your work, on the calendar.", "The week is the working view. The month is there when you need it."],
     routes: ["The day, stop by stop.", "Six stops each, grouped by how close the nodes are."],
     nodes: ["Every node, in one place.", "Maps, locations, and who finished each assignment."],
     billing: splicer.person === "Chris"
@@ -130,7 +144,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <strong>Optimum Fiber</strong>
           </div>
           <span className="sync">
-            <span className="live-dot" /> Saved on this device
+            <span className="live-dot" /> Saved and backed up
             <button className="theme-toggle" aria-label={splicer.dark ? "Light mode" : "Dark mode"} aria-pressed={splicer.dark} title={splicer.dark ? "Light mode" : "Dark mode"} onClick={splicer.toggleTheme}>
               {splicer.dark ? <Sun size={17} /> : <Moon size={17} />}
             </button>
@@ -162,11 +176,23 @@ export function Shell({ children }: { children: React.ReactNode }) {
               </button>
             </div>
           ) : null}
+          {splicer.tab === "today" ? null : (
           <div className="stats">
             <div className="stat">
               <span>
-                Nodes completed
+                This week
                 <CircleCheck size={18} />
+              </span>
+              <strong>
+                {weekDone.length}
+                <em> finished</em>
+              </strong>
+              <small>{weekLabel}. {weekDone.length ? "Finished this week only." : "New week. Nothing logged yet."}</small>
+            </div>
+            <div className="stat">
+              <span>
+                All time
+                <ArrowUpRight size={18} />
               </span>
               <strong>
                 {completed.length}
@@ -175,42 +201,35 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <div className="progress">
                 <i style={{ width: `${progress}%` }} />
               </div>
-              <small>{open.length} still to finish</small>
+              <small>Every earlier week, plus this one. {open.length} still open.</small>
             </div>
             <div className="stat">
               <span>
-                Your generated
-                <ArrowUpRight size={18} />
+                Your pay this week
+                <Clock size={18} />
+              </span>
+              <strong>
+                {money(personalTotal(weekDone, splicer.person))}
+                <em>USD</em>
+              </strong>
+              <small>{weekLabel}. Separate from all-time pay.</small>
+            </div>
+            <div className="stat green">
+              <span>
+                Your pay, all time
+                <Wallet size={18} />
               </span>
               <strong>
                 {money(personalTotal(splicer.nodes, splicer.person))}
                 <em>USD</em>
               </strong>
-              <small>{partner ? `${mine.length} shared nodes · your half` : `${mine.length} nodes × $${CHRIS_RATE}`}</small>
-            </div>
-            <div className="stat">
-              <span>
-                Your to collect
-                <Clock size={18} />
-              </span>
-              <strong>
-                {money(personalTotal(splicer.nodes, splicer.person, false))}
-                <em>USD</em>
-              </strong>
-              <small>{receivable.filter((node) => !node.payDate).length} of yours with no pay date</small>
-            </div>
-            <div className="stat green">
-              <span>
-                Your payment received
-                <Wallet size={18} />
-              </span>
-              <strong>
-                {money(personalTotal(splicer.nodes, splicer.person, true))}
-                <em>USD</em>
-              </strong>
-              <small>{paid.length} of yours paid and confirmed</small>
+              <small>
+                {money(personalTotal(splicer.nodes, splicer.person, false))} still to collect · {paid.length} paid
+                {partner ? "" : ` · ${mine.length} nodes × $${CHRIS_RATE}`}
+              </small>
             </div>
           </div>
+          )}
           {splicer.tab === "calendar" ? <WeekCharts /> : null}
           <div className="section-title">
             <div className="tabs">
