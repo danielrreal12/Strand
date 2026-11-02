@@ -1,8 +1,10 @@
-# Optimum Nodes
+# Splicer · Optimum
 
-Board for the Optimum production week. Each node pays $350.
+Operations board for Optimum Fiber / Paige Communications. Calendar, nodes, the Daniel and Iván route, and billing at $350 per node.
 
-The current rows are from Anthoney Kugler’s iCloud message sent Thursday, Oct 29, 2026, 6:46 PM CT, “Optimum Node Maps - Paige Communications Assignments Due 11/3.” That archive is one email and two map sheets, not a full mailbox export. Anthoney did not write a separate start window, so the start column is the assignment date. GPS coordinates are printed on the map sheets.
+The board is the same product as the live splicer: 97 nodes, Spanish interface, light sage workspace, and PIN **5796**. Edits stay on this device (they are not written back to the original server). On an iPhone, the node sheet also opens Apple Maps and can copy coordinates.
+
+Map PDFs open from **Ver PDF**. On this machine they are cached under `public/maps` when the original board is reachable. Those files are large and are not part of the git history.
 
 ## Run locally
 
@@ -11,8 +13,15 @@ npm install
 npm run dev -- --port 3847
 ```
 
-Open [http://localhost:3847](http://localhost:3847) and enter PIN **4826**.
+Open [http://localhost:3847](http://localhost:3847) and enter PIN **5796**. The browser remembers it for 30 days.
+
+Production:
+
+```bash
+npm run build
+npm run start -- --port 3847 --hostname 0.0.0.0
+```
 
 ## Stack
 
-Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui.
+Next.js (App Router), TypeScript, and the splicer layout (DM Sans and Manrope).

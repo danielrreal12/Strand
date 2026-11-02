@@ -1,5 +1,5 @@
-import { OptimumApp } from "@/components/strand-app";
+import { SplicerApp } from "@/components/splicer/app";
 
 export default function Home() {
-  return <OptimumApp />;
+  return <SplicerApp />;
 }
