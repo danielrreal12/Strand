@@ -72,7 +72,28 @@ export function ProductionView() {
             No splices match this filter yet.
           </p>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+            <ul className="divide-y divide-border/40 md:hidden">
+              {rows.map((row) => (
+                <li key={row.id} className="space-y-2 px-4 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium">{row.fiber}</p>
+                      <p className="text-sm text-muted-foreground">{row.jobTitle}</p>
+                    </div>
+                    <GradeBadge grade={row.grade} />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {row.tech} · {row.lossDb.toFixed(2)} dB ·{" "}
+                    {new Date(row.timestamp).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </li>
+              ))}
+            </ul>
+            <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="border-b border-border/70 text-xs tracking-wide text-muted-foreground uppercase">
                 <tr>
@@ -107,7 +128,8 @@ export function ProductionView() {
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         )}
       </div>
     </div>

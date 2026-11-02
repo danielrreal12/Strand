@@ -19,6 +19,8 @@ npm run dev -- --port 3847
 
 Open [http://localhost:3847](http://localhost:3847) and enter PIN **4826**.
 
+On iPhone, open the same site in Safari (a public link is printed when the tunnel is running). Tap **Share → Add to Home Screen** to launch Strand full screen. The phone layout uses a bottom tab bar and respects the notch and home indicator.
+
 ## Stack
 
 Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui.

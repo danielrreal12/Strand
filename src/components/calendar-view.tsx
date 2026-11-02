@@ -34,6 +34,7 @@ export function CalendarView() {
   const [selectedId, setSelectedId] = useState<string | null>(
     () => JOBS.find((j) => j.status === "in_progress")?.id ?? JOBS[0]?.id ?? null,
   );
+  const [focusIso, setFocusIso] = useState(() => toIso(new Date()));
 
   const days = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(anchor, i)),
@@ -81,7 +82,70 @@ export function CalendarView() {
         </div>
       </header>
 
-      <div className="rise-in rise-in-delay-1 grid gap-3 md:grid-cols-7">
+      <div className="rise-in rise-in-delay-1 md:hidden">
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {days.map((day) => {
+            const iso = toIso(day);
+            const count = JOBS.filter((j) => j.date === iso).length;
+            const isToday = iso === today;
+            const active = focusIso === iso;
+            return (
+              <button
+                key={iso}
+                type="button"
+                onClick={() => {
+                  setFocusIso(iso);
+                  const first = JOBS.find((j) => j.date === iso);
+                  setSelectedId(first?.id ?? null);
+                }}
+                className={`flex min-h-16 min-w-[4.25rem] shrink-0 flex-col items-center justify-center rounded-xl border px-2 ${
+                  active
+                    ? "border-primary/50 bg-primary/10 text-primary"
+                    : "border-border/70 bg-card/40 text-muted-foreground"
+                }`}
+              >
+                <span className="text-[10px] font-medium tracking-wide uppercase">
+                  {day.toLocaleDateString(undefined, { weekday: "short" })}
+                </span>
+                <span className={`text-lg font-semibold ${isToday ? "text-primary" : "text-foreground"}`}>
+                  {day.getDate()}
+                </span>
+                <span className="text-[10px]">
+                  {count === 0 ? "Clear" : `${count} job${count === 1 ? "" : "s"}`}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <ul className="mt-3 space-y-2">
+          {JOBS.filter((j) => j.date === focusIso).length === 0 ? (
+            <li className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              Nothing booked this day.
+            </li>
+          ) : (
+            JOBS.filter((j) => j.date === focusIso).map((job) => (
+              <li key={job.id}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedId(job.id)}
+                  className={`w-full rounded-xl border px-3 py-3 text-left ${
+                    selectedId === job.id
+                      ? "border-primary/50 bg-primary/10"
+                      : "border-border/70 bg-card/40"
+                  }`}
+                >
+                  <p className="font-medium">{job.title}</p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    {job.start}–{job.end} · {job.client}
+                  </p>
+                </button>
+              </li>
+            ))
+          )}
+        </ul>
+      </div>
+
+      <div className="rise-in rise-in-delay-1 hidden gap-3 md:grid md:grid-cols-7">
         {days.map((day) => {
           const iso = toIso(day);
           const jobs = JOBS.filter((j) => j.date === iso);
@@ -112,7 +176,10 @@ export function CalendarView() {
                     <li key={job.id}>
                       <button
                         type="button"
-                        onClick={() => setSelectedId(job.id)}
+                        onClick={() => {
+                          setFocusIso(iso);
+                          setSelectedId(job.id);
+                        }}
                         className={`w-full rounded-lg border px-2 py-1.5 text-left transition hover:border-primary/40 ${
                           selectedId === job.id
                             ? "border-primary/50 bg-primary/10"

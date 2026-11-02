@@ -55,9 +55,9 @@ export function PinGate({ onUnlock }: { onUnlock: () => void }) {
   }, [pin]);
 
   return (
-    <div className="relative flex min-h-svh flex-col items-center justify-center px-5 py-10">
+    <div className="relative flex min-h-dvh flex-col items-center justify-center px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))]">
       <div className="rise-in w-full max-w-[400px]">
-        <div className="mb-10 text-center">
+        <div className="mb-6 text-center sm:mb-10">
           <p className="font-heading text-[0.7rem] font-semibold tracking-[0.28em] text-primary">
             STRAND · FIELD OPS
           </p>
