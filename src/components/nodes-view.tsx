@@ -9,7 +9,7 @@ const STATUS_LABEL: Record<NodeStatus, string> = {
   not_started: "Not started",
   ready: "Ready",
   on_site: "On site",
-  spliced: "Spliced",
+  done: "Done",
   turned_in: "Turned in",
 };
 
@@ -49,7 +49,7 @@ export function NodesView() {
       "not_started",
       "ready",
       "on_site",
-      "spliced",
+      "done",
       "turned_in",
     ];
     setNodes((list) =>

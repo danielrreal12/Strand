@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Delete, LockKeyhole } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DEMO_PIN } from "@/lib/data";
+import { DEMO_PIN } from "@/lib/auth";
 import { verifyPin, writeSession } from "@/lib/auth";
 
 const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "del"] as const;

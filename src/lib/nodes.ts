@@ -1,9 +1,4 @@
-export type NodeStatus =
-  | "not_started"
-  | "ready"
-  | "on_site"
-  | "spliced"
-  | "turned_in";
+export type NodeStatus = "not_started" | "ready" | "on_site" | "done" | "turned_in";
 
 /** One Optimum production node from Anthoney's weekly mail. */
 export interface OptimumNode {
@@ -20,9 +15,8 @@ export interface OptimumNode {
   mapUrl?: string;
   pay: number;
   status: NodeStatus;
-  /** Gate codes, hours, on-site contact, NOL — whatever the mail included. */
+  /** Gate codes, hours, on-site contact — whatever the mail included. */
   access?: string;
-  fiberCount?: number;
   /** Subject and date of the source email. */
   source?: string;
 }

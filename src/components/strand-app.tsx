@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FiberBg } from "@/components/fiber-bg";
+import { AppBg } from "@/components/app-bg";
 import { PinGate } from "@/components/pin-gate";
 import { AppShell } from "@/components/app-shell";
 import { readSession } from "@/lib/auth";
 
-export function StrandApp() {
+export function OptimumApp() {
   const [ready, setReady] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
 
@@ -18,7 +18,7 @@ export function StrandApp() {
   if (!ready) {
     return (
       <div className="flex min-h-svh items-center justify-center">
-        <FiberBg />
+        <AppBg />
         <p className="font-heading text-sm tracking-[0.2em] text-muted-foreground">
           OPTIMUM
         </p>
@@ -28,7 +28,7 @@ export function StrandApp() {
 
   return (
     <>
-      <FiberBg />
+      <AppBg />
       {unlocked ? (
         <AppShell onLock={() => setUnlocked(false)} />
       ) : (

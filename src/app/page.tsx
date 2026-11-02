@@ -1,5 +1,5 @@
-import { StrandApp } from "@/components/strand-app";
+import { OptimumApp } from "@/components/strand-app";
 
 export default function Home() {
-  return <StrandApp />;
+  return <OptimumApp />;
 }

@@ -1,6 +1,8 @@
 "use client";
 
-import { AUTH_DAYS, AUTH_KEY, DEMO_PIN } from "./data";
+const AUTH_DAYS = 30;
+const AUTH_KEY = "optimum-nodes-auth";
+export const DEMO_PIN = "4826";
 
 export type AuthSession = {
   unlockedAt: number;
