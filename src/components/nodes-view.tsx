@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Copy, MapPin, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NODES, PAY_PER_NODE, type NodeStatus, type OptimumNode } from "@/lib/nodes";
-import { GmailConnect } from "@/components/gmail-connect";
 
 const STATUS_LABEL: Record<NodeStatus, string> = {
   not_started: "Not started",
@@ -14,17 +13,15 @@ const STATUS_LABEL: Record<NodeStatus, string> = {
   turned_in: "Turned in",
 };
 
-function mapsHref(node: OptimumNode) {
-  if (node.latitude != null && node.longitude != null) {
-    const q = encodeURIComponent(node.address || node.node);
-    return `https://maps.apple.com/?ll=${node.latitude},${node.longitude}&q=${q}`;
-  }
-  return node.mapUrl;
+function directionsHref(node: OptimumNode) {
+  if (node.latitude == null || node.longitude == null) return undefined;
+  const q = encodeURIComponent(node.address || node.node);
+  return `https://maps.apple.com/?ll=${node.latitude},${node.longitude}&q=${q}`;
 }
 
 function coordLabel(node: OptimumNode) {
   if (node.latitude == null || node.longitude == null) return "—";
-  return `${node.latitude.toFixed(5)}, ${node.longitude.toFixed(5)}`;
+  return `${node.latitude.toFixed(6)}, ${node.longitude.toFixed(6)}`;
 }
 
 export function NodesView() {
@@ -72,14 +69,10 @@ export function NodesView() {
           This week’s nodes
         </h2>
         <p className="mt-1 max-w-xl text-muted-foreground">
-          ${PAY_PER_NODE} a node. Start window, due date, and map coordinates
-          from Anthoney’s mail.
+          ${PAY_PER_NODE} a node. From Anthoney Kugler’s Oct 30 iCloud mail.
+          Both nodes are due Nov 3. This archive is one email, not the whole mailbox.
         </p>
       </header>
-
-      <div className="rise-in rise-in-delay-1">
-        <GmailConnect onNodes={setNodes} />
-      </div>
 
       <div className="rise-in rise-in-delay-1 grid grid-cols-3 gap-2 sm:gap-3">
         <Stat label="Nodes" value={String(nodes.length)} />
@@ -131,7 +124,7 @@ export function NodesView() {
               </thead>
               <tbody>
                 {nodes.map((node) => {
-                  const href = mapsHref(node);
+                  const directions = directionsHref(node);
                   return (
                     <tr key={node.id} className="border-b border-border/40 last:border-0">
                       <td className="px-3 py-3 font-medium">{node.node}</td>
@@ -148,18 +141,29 @@ export function NodesView() {
                         </button>
                       </td>
                       <td className="px-3 py-3">
-                        {href ? (
-                          <a
-                            className="text-primary underline-offset-2 hover:underline"
-                            href={href}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            Open
-                          </a>
-                        ) : (
-                          "—"
-                        )}
+                        <span className="flex flex-wrap gap-3">
+                          {directions ? (
+                            <a
+                              className="text-primary underline-offset-2 hover:underline"
+                              href={directions}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Directions
+                            </a>
+                          ) : null}
+                          {node.mapUrl ? (
+                            <a
+                              className="text-primary underline-offset-2 hover:underline"
+                              href={node.mapUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Map sheet
+                            </a>
+                          ) : null}
+                          {!directions && !node.mapUrl ? "—" : null}
+                        </span>
                       </td>
                       <td className="px-3 py-3 tabular-nums">${node.pay}</td>
                       <td className="px-3 py-3">
@@ -207,7 +211,7 @@ function NodeCard({
   onCopy: () => void;
   onStatus: () => void;
 }) {
-  const href = mapsHref(node);
+  const directions = directionsHref(node);
   return (
     <li className="rounded-xl border border-border/70 bg-card/50 p-4">
       <div className="flex items-start justify-between gap-3">
@@ -252,17 +256,29 @@ function NodeCard({
         <button type="button" className="text-sm text-primary" onClick={onStatus}>
           {STATUS_LABEL[node.status]}
         </button>
-        {href ? (
-          <a
-            href={href}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 text-sm text-primary"
-          >
-            <MapPin className="size-3.5" />
-            Maps
-          </a>
-        ) : null}
+        <span className="flex flex-wrap justify-end gap-3">
+          {directions ? (
+            <a
+              href={directions}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-sm text-primary"
+            >
+              <MapPin className="size-3.5" />
+              Directions
+            </a>
+          ) : null}
+          {node.mapUrl ? (
+            <a
+              href={node.mapUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm text-primary"
+            >
+              Map sheet
+            </a>
+          ) : null}
+        </span>
       </div>
     </li>
   );

@@ -1,6 +1,6 @@
 export type NodeStatus = "not_started" | "ready" | "on_site" | "done" | "turned_in";
 
-/** One Optimum production node from Anthoney's weekly mail. */
+/** One Optimum production node from Anthoney's mail. */
 export interface OptimumNode {
   id: string;
   node: string;
@@ -11,11 +11,11 @@ export interface OptimumNode {
   due: string;
   latitude: number | null;
   longitude: number | null;
-  /** Original map link from the email, when one was attached. */
+  /** Map sheet attached to the email. */
   mapUrl?: string;
   pay: number;
   status: NodeStatus;
-  /** Gate codes, hours, on-site contact — whatever the mail included. */
+  /** Job reference and instructions included in the mail. */
   access?: string;
   /** Subject and date of the source email. */
   source?: string;
@@ -23,8 +23,41 @@ export interface OptimumNode {
 
 export const PAY_PER_NODE = 350;
 
+const SOURCE =
+  "Anthoney Kugler · Fri, 30 Oct 2026 · Optimum Node Maps - Paige Communications Assignments Due 11/3";
+
 /**
- * Filled from Anthoney's emails. Empty until those messages are available
- * to read — do not invent assignments.
+ * From the Oct 30 iCloud message. Anthoney did not give a separate start
+ * window, so the start column is the day they were assigned. GPS comes from
+ * the attached map sheets. This is one email, not a full mailbox export.
  */
-export const NODES: OptimumNode[] = [];
+export const NODES: OptimumNode[] = [
+  {
+    id: "b165a",
+    node: "B165A",
+    address: "3737 Golden Trl, College Station, TX 77845",
+    canStart: "Assigned Oct 30, 2026",
+    due: "Nov 3, 2026",
+    latitude: 30.631075,
+    longitude: -96.261092,
+    mapUrl: "/maps/b165a-overall-map.pdf",
+    pay: PAY_PER_NODE,
+    status: "not_started",
+    access: "WISE-001963 · Send completion photos and an invoice when the node is done.",
+    source: SOURCE,
+  },
+  {
+    id: "b210a",
+    node: "B210A",
+    address: "3122 Camelot Dr, Bryan, TX 77802",
+    canStart: "Assigned Oct 30, 2026",
+    due: "Nov 3, 2026",
+    latitude: 30.65711,
+    longitude: -96.33818,
+    mapUrl: "/maps/b210a-overall-map.pdf",
+    pay: PAY_PER_NODE,
+    status: "not_started",
+    access: "WISE-001938 · Send completion photos and an invoice when the node is done.",
+    source: SOURCE,
+  },
+];
