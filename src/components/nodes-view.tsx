@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Copy, MapPin, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NODES, PAY_PER_NODE, type NodeStatus, type OptimumNode } from "@/lib/nodes";
+import { GmailConnect } from "@/components/gmail-connect";
 
 const STATUS_LABEL: Record<NodeStatus, string> = {
   not_started: "Not started",
@@ -75,6 +76,10 @@ export function NodesView() {
           from Anthoney’s mail.
         </p>
       </header>
+
+      <div className="rise-in rise-in-delay-1">
+        <GmailConnect onNodes={setNodes} />
+      </div>
 
       <div className="rise-in rise-in-delay-1 grid grid-cols-3 gap-2 sm:gap-3">
         <Stat label="Nodes" value={String(nodes.length)} />
