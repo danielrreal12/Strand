@@ -2,7 +2,7 @@ import seedNodes from "@/data/nodes.json";
 
 export const PAY_PER_NODE = 350;
 export const CHRIS_RATE = 300;
-export const NODES_KEY = "splicer-nodes-v2";
+export const NODES_KEY = "splicer-nodes-v3";
 export const STOPS_PER_DAY = 6;
 export const SESSION_KEY = "splicer-session";
 export const ROUTES_KEY = "splicer-routes-v1";
