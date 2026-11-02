@@ -48,7 +48,7 @@ export function BillingView() {
         <p className="production-rule">
           {partner
             ? `You and ${splicer.person === "Daniel" ? "Iván" : "Daniel"} split each day’s nodes in half, even when one of you finishes more. This tab is your half only. Chris’s pay stays on his code.`
-            : "This tab is only your nodes, at $300 each. Daniel and Iván’s split stays off this page."}
+            : "This tab lists only the nodes finished in your name, at $300 each."}
         </p>
         <div className="table-scroll">
           <table>
@@ -229,7 +229,7 @@ export function BillingView() {
           <p>
             {partner
               ? `Every node you or ${splicer.person === "Daniel" ? "Iván" : "Daniel"} finish is $350. That day’s total is split in half, so each node on this page is your $175.`
-              : "Each node with your name on it pays $300. It is not part of the $350 split."}
+              : "Each node with your name on it pays $300."}
           </p>
         </div>
       </section>

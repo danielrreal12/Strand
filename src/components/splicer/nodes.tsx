@@ -122,7 +122,13 @@ export function NodesView() {
                       <span className="notice-tag missing-map">Map still coming</span>
                     )}
                   </td>
-                  <td className="amount">{node.status === "excluded" ? "—" : node.completedBy === "Chris" ? "$300" : "$350"}</td>
+                  <td className="amount">
+                    {node.status === "excluded" || (splicer.person === "Chris" && node.completedBy !== "Chris")
+                      ? "—"
+                      : node.completedBy === "Chris"
+                        ? "$300"
+                        : "$350"}
+                  </td>
                 </tr>
               );
             })}
@@ -130,7 +136,11 @@ export function NodesView() {
         </table>
         {!visible.length ? <div className="empty">No nodes match.</div> : null}
       </div>
-      <div className="table-foot">{visible.length} nodes · Flat $350 USD · Reassigned nodes are out of production and billing</div>
+      <div className="table-foot">
+        {splicer.person === "Chris"
+          ? `${visible.length} nodes · Reassigned nodes are out of production and billing`
+          : `${visible.length} nodes · Flat $350 USD · Reassigned nodes are out of production and billing`}
+      </div>
     </section>
   );
 }

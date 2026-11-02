@@ -62,7 +62,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     routes: ["The day, stop by stop.", "Six stops each, grouped by how close the nodes are."],
     nodes: ["Every node, in one place.", "Maps, locations, and who finished each assignment."],
     billing: splicer.person === "Chris"
-      ? [`Your billing, ${profile.name}.`, "Only your nodes, at $300 each. The $350 split stays off this tab."]
+      ? [`Your billing, ${profile.name}.`, "Only the nodes finished in your name, at $300 each."]
       : [`Your billing, ${profile.name}.`, "Your half of each day you and your partner finished. Chris’s pay stays off this tab."],
   };
   const [title, subtitle] = titles[splicer.tab];
