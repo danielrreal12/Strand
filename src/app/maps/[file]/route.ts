@@ -47,7 +47,7 @@ export async function GET(_request: Request, context: { params: Promise<{ file: 
   const { file } = await context.params;
   const name = safeName(decodeURIComponent(file));
   const known = new Set(seedNodesList().map((node) => node.map).filter(Boolean));
-  if (!name || !known.has(name)) return new Response("Mapa no disponible", { status: 404 });
+  if (!name || !known.has(name)) return new Response("Map not available", { status: 404 });
 
   const local = path.join(MAPS_DIR, name);
   try {
@@ -58,14 +58,14 @@ export async function GET(_request: Request, context: { params: Promise<{ file: 
   }
 
   const cookie = await originCookie();
-  if (!cookie) return new Response("Mapa no disponible", { status: 404 });
+  if (!cookie) return new Response("Map not available", { status: 404 });
   const response = await fetch(`https://optimum-splicer-control.armzglz.chatgpt.site/maps/${encodeURIComponent(name)}`, {
     headers: { Cookie: cookie },
     cache: "no-store",
   });
-  if (!response.ok) return new Response("Mapa no disponible", { status: 404 });
+  if (!response.ok) return new Response("Map not available", { status: 404 });
   const bytes = new Uint8Array(await response.arrayBuffer());
-  if (new TextDecoder().decode(bytes.subarray(0, 4)) !== "%PDF") return new Response("Mapa no disponible", { status: 404 });
+  if (new TextDecoder().decode(bytes.subarray(0, 4)) !== "%PDF") return new Response("Map not available", { status: 404 });
   await mkdir(MAPS_DIR, { recursive: true });
   await writeFile(local, bytes);
   return pdfResponse(bytes);

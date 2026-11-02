@@ -20,7 +20,7 @@ export function SplicerApp() {
     setReady(true);
   }, []);
 
-  if (!ready) return <div className="loading">Cargando tu operación…</div>;
+  if (!ready) return <div className="loading">Loading your operation…</div>;
   if (!authed) return <PinGate onUnlock={() => setAuthed(true)} />;
 
   return (

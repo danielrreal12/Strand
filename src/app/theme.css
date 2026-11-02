@@ -1,0 +1,512 @@
+/* Navy and copper, layered after the original sage stylesheet. */
+:root {
+  --ink: #172033;
+  --muted: #667085;
+  --line: #e3e7ef;
+  --green: #1f4b82;
+  --lime: #e7eef8;
+  --bg: #f3f5f8;
+  --copper: #c4622d;
+  --navy: #1b3a63;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+button:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible,
+.route-planner :focus-visible,
+.weekly-details summary:focus-visible {
+  outline-color: #1f4b82;
+}
+
+aside,
+header {
+  background: #f8f9fc;
+}
+
+.brand-dot,
+.live-dot {
+  background: var(--copper);
+  color: var(--copper);
+}
+
+.brand-icon {
+  color: #f4e6da;
+  background: var(--navy);
+}
+
+.workspace {
+  border-color: #e3e7ef;
+}
+
+.project-icon {
+  color: var(--navy);
+  background: #e7eef8;
+}
+
+.nav-caption {
+  color: #667085;
+}
+
+nav button {
+  color: #5c6b82;
+}
+
+nav button.nav-active {
+  color: var(--navy);
+  background: #e7eef8;
+}
+
+nav button span {
+  background: #f4f7fb;
+  color: var(--navy);
+}
+
+.side-note {
+  background: linear-gradient(140deg, #eef3fa, #f8f9fc);
+  border-color: #d7e0ec;
+}
+
+.side-note p {
+  color: #667085;
+}
+
+.fiber-lines i {
+  background: #c5d0e0;
+}
+
+.profile span {
+  min-width: 0;
+}
+
+.profile > div {
+  color: var(--navy);
+  background: #e7eef8;
+  border-color: #d3deec;
+}
+
+.profile strong {
+  line-height: 1.3;
+}
+
+.breadcrumb,
+.sync,
+.heading p,
+.calendar-help,
+.month button:not(.today-btn),
+.today-btn,
+.calendar-toolbar select,
+select,
+.weekdays,
+.day-number,
+.legend > span,
+.agenda-head > span,
+.agenda-head p,
+.agenda-item small,
+.empty,
+.empty p,
+.bottom-note,
+.search,
+th,
+td,
+.sub,
+.table-foot,
+.panel-heading p,
+.payment-day small,
+.production-row small,
+.production-row > span,
+.rate > span,
+.rate small,
+.rate p,
+.modal-head > button,
+.form-grid label,
+.modal-footer,
+.select-heading,
+.loading,
+.eyebrow {
+  color: #667085;
+}
+
+.eyebrow {
+  color: #8a5a32;
+}
+
+.primary {
+  background: var(--navy);
+}
+
+.primary:hover {
+  background: #142c4d;
+}
+
+.stat > span,
+.stat > span svg,
+.stat em,
+.stat small {
+  color: #667085;
+}
+
+.stat.green {
+  background: #f8f1ea;
+  border-color: #ead8c8;
+}
+
+.stat.green > strong {
+  color: #9a4e22;
+}
+
+.progress {
+  background: #e4e9f1;
+}
+
+.progress i {
+  background: var(--copper);
+}
+
+.section-title {
+  border-color: #d7deea;
+}
+
+.tabs button {
+  color: #7b8798;
+}
+
+.tabs button.current {
+  color: var(--navy);
+}
+
+.tabs button.current:after {
+  background: var(--copper);
+}
+
+.text-button,
+.text-button:hover,
+.node-link,
+.map-link,
+.amount,
+.week-range,
+.weekly-details summary,
+.production-row > span strong,
+.modal-links {
+  color: var(--navy);
+}
+
+.weekdays,
+th {
+  background: #f7f9fc;
+  border-color: #e6ebf2;
+  color: #667085;
+}
+
+.day,
+.agenda-item,
+td,
+.payment-group {
+  border-color: #e6ebf2;
+}
+
+.day:hover {
+  background: #f4f7fb;
+}
+
+.day.selected {
+  background: #eaf1f8;
+  box-shadow: inset 0 0 0 1px #c5d4e8;
+}
+
+.day.outside {
+  background: #f8f9fb;
+}
+
+.day.is-today .day-number {
+  background: var(--navy);
+}
+
+.more,
+.empty strong {
+  color: #5c6b82;
+}
+
+.node-symbol,
+.payment-icon {
+  color: var(--navy);
+  background: #e7eef8;
+}
+
+.agenda-item > svg {
+  color: #9aa6b8;
+}
+
+.search input::placeholder {
+  color: #98a2b3;
+}
+
+.chips button {
+  color: var(--navy);
+  background: #eef3fa;
+}
+
+.rate,
+.production-rule,
+.info-line,
+.agenda-total,
+.agenda-notice,
+.weekly-details details[open] summary {
+  background: #f4f7fb;
+  border-color: #e3e7ef;
+  color: #3d4d66;
+}
+
+.overlay {
+  background: #101826b3;
+}
+
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  color: #172033;
+  border-color: #d7deea;
+}
+
+.form-grid input:disabled {
+  color: #98a2b3;
+  background: #f4f7fb;
+}
+
+.modal-footer {
+  border-color: #e3e7ef;
+}
+
+.select-heading span {
+  color: #98a2b3;
+}
+
+.node-picker label {
+  color: #3d4d66;
+  border-color: #d7deea;
+}
+
+.node-picker label.chosen {
+  color: var(--navy);
+  background: #eaf1f8;
+  border-color: #8eafd6;
+}
+
+input[type="checkbox"] {
+  accent-color: var(--navy);
+}
+
+.toast {
+  color: #f8f4ef;
+  background: #1b3a63;
+  border-color: #c4622d;
+}
+
+.route-map {
+  background: #e6ebf2;
+}
+
+.route-map .leaflet-popup-content {
+  color: #172033;
+}
+
+.route-map .leaflet-popup-content a {
+  color: #1f4b82;
+}
+
+.stop-number {
+  background: var(--navy);
+}
+
+.bar-column i {
+  background: linear-gradient(#e0b089, #1b3a63);
+}
+
+.week-ring {
+  background: conic-gradient(#1b3a63 var(--progress), #e4e9f1 var(--progress));
+}
+
+.week-legend i {
+  background: #1b3a63;
+}
+
+.week-legend i.pending-key {
+  background: #d7deea;
+}
+
+.pin-screen {
+  background: #101826;
+  color: #e7edf5;
+}
+
+.pin-card {
+  background: #18263c;
+  border-color: #2c384c;
+}
+
+.pin-card small {
+  color: #e0b089;
+}
+
+.pin-card p,
+.pin-card footer {
+  color: #9aa6b8;
+}
+
+.pin-card input {
+  background: #101826;
+  border-color: #3d5270;
+}
+
+.pin-card button.primary {
+  background: #e0b089;
+  color: #1a120c;
+}
+
+@media (max-width: 650px) {
+  aside {
+    background: #f8f9fcf5;
+  }
+
+  nav button.nav-active {
+    color: var(--navy);
+  }
+}
+
+html[data-theme="dark"] {
+  --ink: #e7edf5;
+  --muted: #9aa6b8;
+  --line: #2c384c;
+  --green: #8eb4e8;
+  --lime: #e0b089;
+  --bg: #101826;
+}
+
+html[data-theme="dark"] aside,
+html[data-theme="dark"] header {
+  background: #152033;
+}
+
+html[data-theme="dark"] .panel,
+html[data-theme="dark"] .stat,
+html[data-theme="dark"] .modal {
+  background: #18263c;
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .stat.green {
+  background: #243044;
+  border-color: #3d4e68;
+}
+
+html[data-theme="dark"] .stat.green > strong {
+  color: #e0b089;
+}
+
+html[data-theme="dark"] nav button.nav-active,
+html[data-theme="dark"] .project-icon,
+html[data-theme="dark"] .profile > div,
+html[data-theme="dark"] nav button span,
+html[data-theme="dark"] .node-symbol,
+html[data-theme="dark"] .payment-icon,
+html[data-theme="dark"] .chips button {
+  color: #e7eef8;
+  background: #243652;
+}
+
+html[data-theme="dark"] .side-note {
+  background: linear-gradient(140deg, #1c2c44, #152033);
+  border-color: #334864;
+}
+
+html[data-theme="dark"] .side-note strong {
+  color: #e7edf5;
+}
+
+html[data-theme="dark"] .primary {
+  color: #1a120c;
+  background: #e0b089;
+}
+
+html[data-theme="dark"] .primary:hover {
+  background: #efc7a4;
+}
+
+html[data-theme="dark"] .tabs button.current {
+  color: #e0b089;
+}
+
+html[data-theme="dark"] .tabs button.current:after {
+  background: #e0b089;
+}
+
+html[data-theme="dark"] .text-button,
+html[data-theme="dark"] .node-link,
+html[data-theme="dark"] .map-link,
+html[data-theme="dark"] .week-range,
+html[data-theme="dark"] .amount,
+html[data-theme="dark"] .weekly-details summary,
+html[data-theme="dark"] .production-row > span strong {
+  color: #c5d8f2;
+}
+
+html[data-theme="dark"] .day:hover,
+html[data-theme="dark"] .day.selected {
+  background: #243652;
+}
+
+html[data-theme="dark"] .day.selected {
+  box-shadow: inset 0 0 0 1px #6d8eb8;
+}
+
+html[data-theme="dark"] .day.is-today .day-number {
+  background: #e0b089;
+  color: #1a120c;
+}
+
+html[data-theme="dark"] .agenda-notice,
+html[data-theme="dark"] .production-rule,
+html[data-theme="dark"] .info-line,
+html[data-theme="dark"] .agenda-total,
+html[data-theme="dark"] .rate,
+html[data-theme="dark"] .weekly-details details[open] summary {
+  color: #c5d4e8;
+  background: #1c2c44;
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .node-picker label.chosen {
+  color: #e7eef8;
+  background: #243652;
+  border-color: #6d8eb8;
+}
+
+html[data-theme="dark"] .week-ring:before {
+  background: #18263c;
+}
+
+html[data-theme="dark"] .route-map {
+  background: #1c2c44;
+}
+
+html[data-theme="dark"] .week-legend i {
+  background: #8eb4e8;
+}
+
+html[data-theme="dark"] .week-legend i.pending-key {
+  background: #334864;
+}
+
+html[data-theme="dark"] .bar-column i {
+  background: linear-gradient(#e0b089, #6d8eb8);
+}
+
+@media (max-width: 650px) {
+  html[data-theme="dark"] aside {
+    background: #152033f5;
+  }
+}

@@ -2,9 +2,9 @@
 
 Operations board for Optimum Fiber / Paige Communications. Calendar, nodes, the Daniel and Iván route, and billing at $350 per node.
 
-The board is the same product as the live splicer: 97 nodes, Spanish interface, light sage workspace, and PIN **5796**. Edits stay on this device (they are not written back to the original server). On an iPhone, the node sheet also opens Apple Maps and can copy coordinates.
+The board keeps the live splicer's 97 nodes, calendar, route, and $350 billing, in English, with a navy and copper workspace. The profile is Daniel Villarreal. PIN **5796**. Edits stay on this device (they are not written back to the original server). On an iPhone, the node sheet also opens Apple Maps and can copy coordinates.
 
-Map PDFs open from **Ver PDF**. On this machine they are cached under `public/maps` when the original board is reachable. Those files are large and are not part of the git history.
+Map PDFs open from **View PDF**. On this machine they are cached under `public/maps` when the original board is reachable. Those files are large and are not part of the git history.
 
 ## Run locally
 

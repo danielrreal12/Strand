@@ -31,17 +31,17 @@ import { WeekCharts } from "./calendar";
 import { useSplicer } from "./provider";
 
 const NAV: { id: TabId; label: string; icon: typeof CalendarDays }[] = [
-  { id: "calendar", label: "Calendario", icon: CalendarDays },
-  { id: "nodes", label: "Nodos", icon: Layers },
-  { id: "routes", label: "Mapa y ruta", icon: MapPin },
+  { id: "calendar", label: "Calendar", icon: CalendarDays },
+  { id: "nodes", label: "Nodes", icon: Layers },
+  { id: "routes", label: "Map & route", icon: MapPin },
   { id: "billing", label: "Billing", icon: Receipt },
 ];
 
 const TABS: { id: TabId; label: string }[] = [
-  { id: "calendar", label: "Calendario" },
-  { id: "nodes", label: "Todos los nodos" },
-  { id: "routes", label: "Mapa y ruta" },
-  { id: "billing", label: "Billing y pagos" },
+  { id: "calendar", label: "Calendar" },
+  { id: "nodes", label: "All nodes" },
+  { id: "routes", label: "Map & route" },
+  { id: "billing", label: "Billing & payments" },
 ];
 
 export function Shell({ children }: { children: React.ReactNode }) {
@@ -54,10 +54,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const open = active.filter((node) => node.status !== "completed");
   const progress = active.length ? (completed.length / active.length) * 100 : 0;
   const titles: Record<TabId, [string, string]> = {
-    calendar: ["Tu operación, en calendario.", "Organiza el trabajo. Registra avances. Ten claridad de lo que viene."],
-    routes: ["Tu jornada, punto por punto.", "Visualiza los nodos y prepara tu recorrido del día."],
-    nodes: ["Cada nodo, bajo control.", "Mapas, ubicaciones y seguimiento de cada asignación."],
-    billing: ["El trabajo se convierte en ingresos.", "Controla tu producción y conoce cuánto y cuándo vas a cobrar."],
+    calendar: ["Your work, on the calendar.", "Plan the week. Log progress. See what's next."],
+    routes: ["The day, stop by stop.", "See the nodes and build the route."],
+    nodes: ["Every node, in one place.", "Maps, locations, and the status of each assignment."],
+    billing: ["The work turns into pay.", "See what you produced and when it gets paid."],
   };
   const [title, subtitle] = titles[splicer.tab];
 
@@ -95,12 +95,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
         <div className="side-note">
-          <span className="live-dot" /> PROYECTO ACTIVO
-          <strong>Cada conexión cuenta.</strong>
+          <span className="live-dot" /> ACTIVE PROJECT
+          <strong>Every connection counts.</strong>
           <p>
-            Tu operación y tus pagos,
+            Your work and your pay,
             <br />
-            en un mismo lugar.
+            in one place.
           </p>
           <div className="fiber-lines">
             <i />
@@ -109,10 +109,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <div className="profile">
-          <div>AR</div>
+          <div>DV</div>
           <span>
-            <strong>Alex Ramirez</strong>
-            <small>Administrador · Privado</small>
+            <strong>Daniel Villarreal</strong>
+            <small>Administrator · Private</small>
           </span>
         </div>
       </aside>
@@ -124,34 +124,34 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <strong>Optimum Fiber</strong>
           </div>
           <span className="sync">
-            <span className="live-dot" /> Guardado en este dispositivo
-            <button className="theme-toggle" aria-label={splicer.dark ? "Activar modo claro" : "Activar modo oscuro"} aria-pressed={splicer.dark} title={splicer.dark ? "Modo claro" : "Modo oscuro"} onClick={splicer.toggleTheme}>
+            <span className="live-dot" /> Saved on this device
+            <button className="theme-toggle" aria-label={splicer.dark ? "Light mode" : "Dark mode"} aria-pressed={splicer.dark} title={splicer.dark ? "Light mode" : "Dark mode"} onClick={splicer.toggleTheme}>
               {splicer.dark ? <Sun size={17} /> : <Moon size={17} />}
             </button>
-            <button title="Actualizar información" onClick={splicer.refresh}>
+            <button title="Refresh" onClick={splicer.refresh}>
               <RefreshCw size={15} />
             </button>
-            <button title="Cerrar sesión" aria-label="Cerrar sesión" onClick={splicer.lock}>
-              Salir
+            <button title="Sign out" aria-label="Sign out" onClick={splicer.lock}>
+              Sign out
             </button>
           </span>
         </header>
         <main>
           <div className="heading">
             <div>
-              <div className="eyebrow">OPERACIONES DE FIBRA ÓPTICA</div>
+              <div className="eyebrow">OPTIMUM FIBER OPERATIONS</div>
               <h1>{title}</h1>
               <p>{subtitle}</p>
             </div>
             <button className="primary" onClick={() => splicer.openBatch()}>
               <Plus size={18} />
-              Registrar jornada
+              Log a day
             </button>
           </div>
           {splicer.error && !splicer.editing && !splicer.batchOpen ? (
             <div className="error" role="alert">
               {splicer.error}
-              <button onClick={() => splicer.setError("")} aria-label="Cerrar aviso">
+              <button onClick={() => splicer.setError("")} aria-label="Close notice">
                 <X size={16} />
               </button>
             </div>
@@ -159,7 +159,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <div className="stats">
             <div className="stat">
               <span>
-                Nodos completados
+                Nodes completed
                 <CircleCheck size={18} />
               </span>
               <strong>
@@ -169,40 +169,40 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <div className="progress">
                 <i style={{ width: `${progress}%` }} />
               </div>
-              <small>{open.length} pendientes de completar</small>
+              <small>{open.length} still to finish</small>
             </div>
             <div className="stat">
               <span>
-                Generado
+                Generated
                 <ArrowUpRight size={18} />
               </span>
               <strong>
                 {money(generated.length * PAY_PER_NODE)}
                 <em>USD</em>
               </strong>
-              <small>{generated.length} nodos × $350 por nodo</small>
+              <small>{generated.length} nodes × $350 per node</small>
             </div>
             <div className="stat">
               <span>
-                Por cobrar
+                To collect
                 <Clock size={18} />
               </span>
               <strong>
                 {money(receivable.length * PAY_PER_NODE)}
                 <em>USD</em>
               </strong>
-              <small>{receivable.filter((node) => !node.payDate).length} nodos sin fecha de pago</small>
+              <small>{receivable.filter((node) => !node.payDate).length} nodes with no pay date</small>
             </div>
             <div className="stat green">
               <span>
-                Pago recibido
+                Payment received
                 <Wallet size={18} />
               </span>
               <strong>
                 {money(paid.length * PAY_PER_NODE)}
                 <em>USD</em>
               </strong>
-              <small>{paid.length} nodos pagados y confirmados</small>
+              <small>{paid.length} nodes paid and confirmed</small>
             </div>
           </div>
           {splicer.tab === "calendar" ? <WeekCharts /> : null}
@@ -215,15 +215,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
               ))}
             </div>
             <button className="text-button" onClick={() => downloadCsv(splicer.nodes, splicer.today)}>
-              <Download size={16} /> Exportar CSV
+              <Download size={16} /> Export CSV
             </button>
           </div>
           {children}
           <div className="bottom-note">
             <span>
-              <Radio size={14} /> {active.length} nodos activos · {active.filter((node) => node.map).length} mapas disponibles · Bryan / College Station, TX
+              <Radio size={14} /> {active.length} active nodes · {active.filter((node) => node.map).length} maps available · Bryan / College Station, TX
             </span>
-            <span>Los pagos se confirman manualmente.</span>
+            <span>Payments are confirmed manually.</span>
           </div>
         </main>
       </div>

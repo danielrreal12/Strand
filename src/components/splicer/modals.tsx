@@ -47,7 +47,7 @@ function NodeModal({ node }: { node: SplicerNode }) {
   function save(event: React.FormEvent) {
     event.preventDefault();
     if (node.status === "completed" && !node.completed) {
-      splicer.setError("La fecha de completado es obligatoria.");
+      splicer.setError("The completion date is required.");
       return;
     }
     splicer.saveChanges([node.code], {
@@ -68,13 +68,13 @@ function NodeModal({ node }: { node: SplicerNode }) {
 
   return (
     <div className="overlay" onClick={() => !splicer.saving && splicer.setEditing(null)}>
-      <section className="modal" role="dialog" aria-modal="true" aria-label={`Editar ${node.code}`} onClick={(event) => event.stopPropagation()}>
+      <section className="modal" role="dialog" aria-modal="true" aria-label={`Edit ${node.code}`} onClick={(event) => event.stopPropagation()}>
         <div className="modal-head">
           <div>
-            <span className="eyebrow">FICHA DEL NODO</span>
+            <span className="eyebrow">NODE SHEET</span>
             <h2>{node.code}</h2>
           </div>
-          <button aria-label="Cerrar" onClick={() => splicer.setEditing(null)}>
+          <button aria-label="Close" onClick={() => splicer.setEditing(null)}>
             <X />
           </button>
         </div>
@@ -83,13 +83,13 @@ function NodeModal({ node }: { node: SplicerNode }) {
           {node.map ? (
             <a href={`/maps/${encodeURIComponent(node.map)}`} target="_blank" rel="noreferrer">
               <FileText size={16} />
-              Abrir mapa PDF
+              Open map PDF
             </a>
           ) : null}
           {node.gps ? (
             <a href={googleSearch(node.gps)} target="_blank" rel="noreferrer">
               <MapPin size={16} />
-              Ir al nodo
+              Go to node
             </a>
           ) : null}
           {node.gps ? (
@@ -104,28 +104,28 @@ function NodeModal({ node }: { node: SplicerNode }) {
               type="button"
               onClick={() => {
                 navigator.clipboard?.writeText(node.gps).then(
-                  () => splicer.showToast("Coordenadas copiadas"),
+                  () => splicer.showToast("Coordinates copied"),
                   () => splicer.showToast(node.gps),
                 );
               }}
             >
-              Copiar coordenadas
+              Copy coordinates
             </button>
           ) : null}
           {node.source ? (
             <a href={`https://mail.google.com/mail/u/?authuser=armzglz%40gmail.com#all/${node.source}`} target="_blank" rel="noreferrer">
-              Correo original <ExternalLink size={14} />
+              Original email <ExternalLink size={14} />
             </a>
           ) : null}
         </div>
         <div className="info-line">
-          Inicio: {formatShort(node.start)} · Límite: {formatShort(node.due)} {node.night ? "· Sólo 00:00–06:00" : ""}
+          Start: {formatShort(node.start)} · Due: {formatShort(node.due)} {node.night ? "· Night only 00:00–06:00" : ""}
         </div>
         <form onSubmit={save}>
-          <p className="production-rule">Completar únicamente con el reporte de producción confirmado por Alex.</p>
+          <p className="production-rule">Mark a node complete only from a confirmed production report.</p>
           <div className="form-grid">
             <label>
-              Estado
+              Status
               <select
                 disabled={node.status === "excluded"}
                 value={node.status}
@@ -146,31 +146,31 @@ function NodeModal({ node }: { node: SplicerNode }) {
               </select>
             </label>
             <label>
-              Fecha programada
+              Scheduled date
               <input type="date" min={node.start || undefined} value={node.scheduled} onChange={(event) => setNode({ ...node, scheduled: event.target.value })} />
             </label>
             <label>
-              Fecha de completado
+              Completion date
               <input type="date" disabled={node.status !== "completed"} required={node.status === "completed"} value={node.completed} onChange={(event) => setNode({ ...node, completed: event.target.value })} />
             </label>
             <label>
-              Pago esperado
+              Expected pay
               <input type="date" disabled={node.status !== "completed"} min={node.completed || undefined} value={node.payDate} onChange={(event) => setNode({ ...node, payDate: event.target.value })} />
             </label>
             <label>
-              Pago recibido (confirmado)
+              Payment received (confirmed)
               <input type="date" disabled={node.status !== "completed"} min={node.completed || undefined} value={node.paidDate} onChange={(event) => setNode({ ...node, paidDate: event.target.value })} />
             </label>
             <label>
-              Estado de factura
+              Invoice status
               <select value={node.invoiceStatus} onChange={(event) => setNode({ ...node, invoiceStatus: event.target.value as InvoiceStatus })}>
-                <option value="pending">Pendiente</option>
-                <option value="sent">Enviada</option>
-                <option value="approved">Aprobada</option>
+                <option value="pending">Pending</option>
+                <option value="sent">Sent</option>
+                <option value="approved">Approved</option>
               </select>
             </label>
             <label>
-              Número de factura
+              Invoice number
               <input value={node.invoice} onChange={(event) => setNode({ ...node, invoice: event.target.value })} />
             </label>
             <label>
@@ -178,28 +178,28 @@ function NodeModal({ node }: { node: SplicerNode }) {
               <input value={node.job} onChange={(event) => setNode({ ...node, job: event.target.value })} />
             </label>
             <label className="wide">
-              Dirección / referencia
+              Address / reference
               <input value={node.address} onChange={(event) => setNode({ ...node, address: event.target.value })} />
             </label>
             <label>
-              Incluir en billing
+              Include in billing
               <select value={node.billingIncluded === false ? "no" : "yes"} onChange={(event) => setNode({ ...node, billingIncluded: event.target.value === "yes" })}>
-                <option value="yes">Sí, facturable</option>
-                <option value="no">No, fuera de billing</option>
+                <option value="yes">Yes, billable</option>
+                <option value="no">No, out of billing</option>
               </select>
-              <small>Los completados fuera de billing siguen registrados como producción; los completados no entran al routing.</small>
+              <small>Completed nodes kept out of billing stay on the production record. Completed nodes drop off the route.</small>
             </label>
             <label className="wide">
-              Aviso de seguimiento
+              Follow-up
               <select value={node.reviewStatus || ""} onChange={(event) => setNode({ ...node, reviewStatus: event.target.value })}>
-                <option value="">Sin aviso adicional</option>
-                <option value="review_data">Revisar datos</option>
-                <option value="check_reassignment">Consultar reasignación</option>
+                <option value="">No extra note</option>
+                <option value="review_data">Review data</option>
+                <option value="check_reassignment">Check reassignment</option>
               </select>
-              <small>Este aviso no cambia el estado de producción. El mapa pendiente se identifica automáticamente.</small>
+              <small>This note does not change production status. A missing map is flagged on its own.</small>
             </label>
             <label className="wide">
-              Notas
+              Notes
               <textarea rows={4} value={node.notes} onChange={(event) => setNode({ ...node, notes: event.target.value })} />
             </label>
           </div>
@@ -209,9 +209,9 @@ function NodeModal({ node }: { node: SplicerNode }) {
             </p>
           ) : null}
           <div className="modal-footer">
-            <span>{REVIEW_LABEL[node.reviewStatus] || "Sin aviso"}</span>
+            <span>{REVIEW_LABEL[node.reviewStatus] || "No note"}</span>
             <button className="primary" type="submit" disabled={splicer.saving}>
-              {splicer.saving ? "Guardando…" : "Guardar cambios"}
+              {splicer.saving ? "Saving…" : "Save changes"}
             </button>
           </div>
         </form>
@@ -227,7 +227,7 @@ function BatchModal() {
     splicer.batchMode === "payment" || splicer.batchMode === "received" ? node.status === "completed" && !node.paidDate : node.status !== "completed",
   );
   const dateLabel =
-    splicer.batchMode === "complete" ? "Fecha de completado" : splicer.batchMode === "schedule" ? "Fecha de trabajo" : splicer.batchMode === "payment" ? "Fecha de pago previsto" : "Fecha real del pago";
+    splicer.batchMode === "complete" ? "Completion date" : splicer.batchMode === "schedule" ? "Work date" : splicer.batchMode === "payment" ? "Expected pay date" : "Date the payment arrived";
 
   function save(event: React.FormEvent) {
     event.preventDefault();
@@ -252,25 +252,25 @@ function BatchModal() {
 
   return (
     <div className="overlay" onClick={() => !splicer.saving && splicer.closeBatch()}>
-      <section className="modal" role="dialog" aria-modal="true" aria-label="Registrar jornada" onClick={(event) => event.stopPropagation()}>
+      <section className="modal" role="dialog" aria-modal="true" aria-label="Log a day" onClick={(event) => event.stopPropagation()}>
         <div className="modal-head">
           <div>
-            <span className="eyebrow">ACTUALIZACIÓN POR LOTE</span>
-            <h2>Registrar jornada</h2>
+            <span className="eyebrow">BATCH UPDATE</span>
+            <h2>Log a day</h2>
           </div>
-          <button aria-label="Cerrar" onClick={splicer.closeBatch}>
+          <button aria-label="Close" onClick={splicer.closeBatch}>
             <X />
           </button>
         </div>
         <form onSubmit={save}>
           <div className="form-grid">
             <label className="wide">
-              Qué quieres registrar
+              What do you want to record
               <select value={splicer.batchMode} onChange={(event) => splicer.setBatchMode(event.target.value as typeof splicer.batchMode)}>
-                <option value="complete">Nodos completados</option>
-                <option value="schedule">Programar trabajo</option>
-                <option value="payment">Fecha de pago esperado</option>
-                <option value="received">Pago recibido y confirmado</option>
+                <option value="complete">Nodes completed</option>
+                <option value="schedule">Schedule work</option>
+                <option value="payment">Expected pay date</option>
+                <option value="received">Payment received and confirmed</option>
               </select>
             </label>
             <label>
@@ -279,14 +279,14 @@ function BatchModal() {
             </label>
             {splicer.batchMode === "complete" ? (
               <label>
-                Pago esperado (opcional)
+                Expected pay (optional)
                 <input type="date" min={splicer.batchDate} value={splicer.batchPay} onChange={(event) => splicer.setBatchPay(event.target.value)} />
               </label>
             ) : null}
           </div>
-          <p className="production-rule">Selecciona únicamente los nodos incluidos en tu reporte de producción.</p>
+          <p className="production-rule">Select only the nodes on your production report.</p>
           <p className="select-heading">
-            Selecciona los nodos <span>{splicer.selectedCodes.length} seleccionados</span>
+            Select nodes <span>{splicer.selectedCodes.length} selected</span>
           </p>
           <div className="node-picker">
             {choices.map((node) => (
@@ -296,7 +296,7 @@ function BatchModal() {
               </label>
             ))}
           </div>
-          {!choices.length ? <p>No hay nodos completados pendientes de pago.</p> : null}
+          {!choices.length ? <p>No completed nodes are waiting on payment.</p> : null}
           {splicer.error ? (
             <p className="form-error" role="alert">
               {splicer.error}
@@ -304,10 +304,10 @@ function BatchModal() {
           ) : null}
           <div className="modal-footer">
             <span>
-              {splicer.selectedCodes.length} nodos · <strong>{money(splicer.selectedCodes.length * PAY_PER_NODE)}</strong>
+              {splicer.selectedCodes.length} nodes · <strong>{money(splicer.selectedCodes.length * PAY_PER_NODE)}</strong>
             </span>
             <button className="primary" type="submit" disabled={splicer.saving || !splicer.selectedCodes.length}>
-              {splicer.saving ? "Guardando…" : "Guardar registro"}
+              {splicer.saving ? "Saving…" : "Save record"}
             </button>
           </div>
         </form>

@@ -4,7 +4,7 @@ import { billingPeriod, billingWeeks, seedNodesList } from "./splicer.ts";
 
 test("billing periods match the Optimum cuts", () => {
   assert.equal(billingPeriod("2026-10-13").payDate, "2026-10-30");
-  assert.equal(billingPeriod("2026-10-20").label, "Segundo corte · Lunes a jueves");
+  assert.equal(billingPeriod("2026-10-20").label, "Second cut · Monday to Thursday");
   const friday = billingPeriod("2026-10-27");
   assert.equal(friday.start, "2026-10-23");
   assert.equal(friday.end, "2026-10-29");

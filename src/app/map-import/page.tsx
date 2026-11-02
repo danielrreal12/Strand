@@ -18,7 +18,7 @@ export default function MapImportPage() {
     try {
       const response = await fetch("/api/maps", { method: "POST", body: form });
       const payload = (await response.json()) as { error?: string; saved?: string[] };
-      if (!response.ok) throw new Error(payload.error || "No se pudieron guardar los mapas");
+      if (!response.ok) throw new Error(payload.error || "Couldn’t save the maps");
       const saved = new Set(payload.saved ?? []);
       let parsed: Record<string, string> = {};
       const raw = coords.trim();
@@ -41,9 +41,9 @@ export default function MapImportPage() {
       });
       writeStoredNodes(nodes);
       localStorage.setItem(NODES_KEY, JSON.stringify(nodes));
-      setStatus(`Guardados ${saved.size} mapas. Las coordenadas quedaron en este dispositivo.`);
+      setStatus(`Saved ${saved.size} maps. Coordinates are stored on this device.`);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "No se pudieron guardar los mapas");
+      setError(caught instanceof Error ? caught.message : "Couldn’t save the maps");
     } finally {
       setPending(false);
     }
@@ -52,25 +52,25 @@ export default function MapImportPage() {
   return (
     <main className="map-import">
       <a className="text-button" href="/">
-        ← Volver al dashboard
+        ← Back to the board
       </a>
-      <div className="eyebrow">MAPAS</div>
-      <h1>Agregar mapas PDF</h1>
-      <p>Selecciona los mapas recibidos por correo y agrega sus coordenadas por nodo. Cada PDF queda vinculado a su ubicación en el dashboard.</p>
+      <div className="eyebrow">MAPS</div>
+      <h1>Add map PDFs</h1>
+      <p>Choose the map files from the email and add coordinates for each node. Each PDF stays tied to that location on the board.</p>
       <form onSubmit={submit} className="panel" style={{ padding: 22, display: "grid", gap: 16 }}>
         <label>
-          Archivos PDF de mapa (hasta 20, máximo 8 MB cada uno)
+          Map PDF files (up to 20, 8 MB each)
           <input name="files" type="file" accept="application/pdf,.pdf" multiple required />
         </label>
         <label>
-          Coordenadas por nodo (JSON)
+          Coordinates by node (JSON)
           <textarea value={coords} onChange={(event) => setCoords(event.target.value)} />
-          <small className="sub">Usa el código de nodo y las coordenadas que aparecen en rojo en cada mapa.</small>
+          <small className="sub">Use the node code and the coordinates printed in red on each map.</small>
         </label>
         {error ? <p className="form-error">{error}</p> : null}
         {status ? <p className="production-rule">{status}</p> : null}
         <button className="primary" disabled={pending} type="submit">
-          {pending ? "Guardando…" : "Guardar mapas y ubicaciones"}
+          {pending ? "Saving…" : "Save maps and locations"}
         </button>
       </form>
     </main>

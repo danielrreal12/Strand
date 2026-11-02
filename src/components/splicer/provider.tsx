@@ -76,7 +76,7 @@ const SplicerContext = createContext<SplicerState | null>(null);
 
 export function useSplicer() {
   const value = useContext(SplicerContext);
-  if (!value) throw new Error("Splicer no está listo");
+  if (!value) throw new Error("Splicer is not ready");
   return value;
 }
 
@@ -146,16 +146,16 @@ export function SplicerProvider({ children, onLock }: { children: ReactNode; onL
       setSaving(true);
       setError("");
       try {
-        if (!codes.length) throw new Error("Selecciona al menos un nodo.");
+        if (!codes.length) throw new Error("Select at least one node.");
         const next = nodes.map((node) => (codes.includes(node.code) ? { ...node, ...changes } : node));
         writeStoredNodes(next);
         setNodes(next);
         setEditing(null);
         setBatchOpen(false);
         setSelectedCodes([]);
-        showToast("Cambios guardados");
+        showToast("Changes saved");
       } catch (caught) {
-        setError(caught instanceof Error ? caught.message : "Error al guardar");
+        setError(caught instanceof Error ? caught.message : "Couldn’t save");
       } finally {
         setSaving(false);
       }
@@ -186,14 +186,14 @@ export function SplicerProvider({ children, onLock }: { children: ReactNode; onL
       writeRoutePlans(next);
       return next;
     });
-    showToast(plan.saved ? "Reparto guardado en este dispositivo" : "Vista previa actualizada");
+    showToast(plan.saved ? "Saved on this device" : "Preview updated");
   }, [showToast]);
 
   const refresh = useCallback(() => {
     setNodes(readStoredNodes());
     setToday(chicagoToday());
     setRoutePlans(readRoutePlans());
-    showToast("Información actualizada");
+    showToast("Information updated");
   }, [showToast]);
 
   const lock = useCallback(() => {

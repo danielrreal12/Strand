@@ -27,15 +27,15 @@ export function NodesView() {
       <div className="table-toolbar">
         <div className="search">
           <Search size={17} />
-          <input placeholder="Buscar nodo, GPS o factura…" value={splicer.query} onChange={(event) => splicer.setQuery(event.target.value)} />
+          <input placeholder="Search node, GPS, or invoice…" value={splicer.query} onChange={(event) => splicer.setQuery(event.target.value)} />
         </div>
         <a className="text-button" href="/map-import">
-          Agregar mapas PDF
+          Add map PDFs
         </a>
-        <select aria-label="Filtrar estado" value={splicer.filter} onChange={(event) => splicer.setFilter(event.target.value)}>
-          <option value="all">Todos los activos</option>
-          <option value="map_pending">Mapa por recibir</option>
-          <option value="review">Con aviso de seguimiento</option>
+        <select aria-label="Filter status" value={splicer.filter} onChange={(event) => splicer.setFilter(event.target.value)}>
+          <option value="all">All active</option>
+          <option value="map_pending">Map still coming</option>
+          <option value="review">With a follow-up</option>
           {Object.entries(STATUS_LABEL).map(([value, label]) => (
             <option key={value} value={value}>
               {label}
@@ -44,7 +44,7 @@ export function NodesView() {
         </select>
         {splicer.selectedCodes.length > 0 ? (
           <button className="primary" onClick={() => splicer.openBatch()}>
-            Editar {splicer.selectedCodes.length} nodos
+            Edit {splicer.selectedCodes.length} nodes
           </button>
         ) : null}
       </div>
@@ -55,17 +55,17 @@ export function NodesView() {
               <th>
                 <input
                   type="checkbox"
-                  aria-label="Seleccionar visibles"
+                  aria-label="Select visible"
                   checked={allSelected}
                   onChange={(event) => splicer.setSelectedCodes(event.target.checked ? selectable : [])}
                 />
               </th>
-              <th>NODO</th>
-              <th>ESTADO</th>
-              <th>FECHAS</th>
-              <th>UBICACIÓN</th>
-              <th>MAPA</th>
-              <th>VALOR</th>
+              <th>NODE</th>
+              <th>STATUS</th>
+              <th>DATES</th>
+              <th>LOCATION</th>
+              <th>MAP</th>
+              <th>VALUE</th>
             </tr>
           </thead>
           <tbody>
@@ -78,7 +78,7 @@ export function NodesView() {
                       type="checkbox"
                       disabled={node.status === "excluded"}
                       checked={splicer.selectedCodes.includes(node.code)}
-                      aria-label={`Seleccionar ${node.code}`}
+                      aria-label={`Select ${node.code}`}
                       onChange={() => splicer.toggleCode(node.code)}
                     />
                   </td>
@@ -93,13 +93,13 @@ export function NodesView() {
                   <td>
                     <span className={`pill ${node.status}`}>{STATUS_LABEL[node.status]}</span>
                     {flag.label ? <small className="sub deadline-label">{flag.label}</small> : null}
-                    {node.night ? <small className="sub">☾ Corte nocturno</small> : null}
+                    {node.night ? <small className="sub">☾ Night cut</small> : null}
                   </td>
                   <td>
                     <strong className="table-date">
-                      {node.completed ? `Completado ${formatShort(node.completed)}` : node.scheduled ? `Programado ${formatShort(node.scheduled)}` : `Límite ${formatShort(node.due)}`}
+                      {node.completed ? `Completed ${formatShort(node.completed)}` : node.scheduled ? `Scheduled ${formatShort(node.scheduled)}` : `Due ${formatShort(node.due)}`}
                     </strong>
-                    <small className="sub">{node.start ? `Desde ${formatShort(node.start)}` : "Inicio sin restricción indicada"}</small>
+                    <small className="sub">{node.start ? `From ${formatShort(node.start)}` : "No start restriction listed"}</small>
                   </td>
                   <td>
                     {node.gps ? (
@@ -108,17 +108,17 @@ export function NodesView() {
                         {node.gps}
                       </a>
                     ) : (
-                      "Por confirmar"
+                      "To confirm"
                     )}
                     {node.address ? <small className="sub">{node.address}</small> : null}
                   </td>
                   <td>
                     {node.map ? (
                       <a className="map-link" href={`/maps/${encodeURIComponent(node.map)}`} target="_blank" rel="noreferrer">
-                        <FileText size={15} /> Ver PDF
+                        <FileText size={15} /> View PDF
                       </a>
                     ) : (
-                      <span className="notice-tag missing-map">Mapa por recibir</span>
+                      <span className="notice-tag missing-map">Map still coming</span>
                     )}
                   </td>
                   <td className="amount">{node.status === "excluded" ? "—" : "$350"}</td>
@@ -127,9 +127,9 @@ export function NodesView() {
             })}
           </tbody>
         </table>
-        {!visible.length ? <div className="empty">No hay nodos que coincidan.</div> : null}
+        {!visible.length ? <div className="empty">No nodes match.</div> : null}
       </div>
-      <div className="table-foot">{visible.length} nodos · Tarifa fija de $350 USD · Los reasignados quedan fuera de producción y cobro</div>
+      <div className="table-foot">{visible.length} nodes · Flat $350 USD · Reassigned nodes are out of production and billing</div>
     </section>
   );
 }

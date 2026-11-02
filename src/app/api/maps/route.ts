@@ -15,16 +15,16 @@ export async function POST(request: Request) {
   const form = await request.formData();
   const files = form.getAll("files").filter((item): item is File => item instanceof File);
   if (!files.length || files.length > 20) {
-    return Response.json({ error: "Selecciona entre 1 y 20 PDF." }, { status: 400 });
+    return Response.json({ error: "Choose between 1 and 20 PDFs." }, { status: 400 });
   }
   const saved: string[] = [];
   await mkdir(MAPS_DIR, { recursive: true });
   for (const file of files) {
-    if (file.size > 8 * 1024 * 1024) return Response.json({ error: `${file.name} supera 8 MB.` }, { status: 400 });
+    if (file.size > 8 * 1024 * 1024) return Response.json({ error: `${file.name} is over 8 MB.` }, { status: 400 });
     const name = safeName(file.name);
-    if (!name) return Response.json({ error: `Nombre no permitido: ${file.name}` }, { status: 400 });
+    if (!name) return Response.json({ error: `Name not allowed: ${file.name}` }, { status: 400 });
     const bytes = Buffer.from(await file.arrayBuffer());
-    if (bytes.subarray(0, 4).toString() !== "%PDF") return Response.json({ error: `${file.name} no es un PDF.` }, { status: 400 });
+    if (bytes.subarray(0, 4).toString() !== "%PDF") return Response.json({ error: `${file.name} is not a PDF.` }, { status: 400 });
     await writeFile(path.join(MAPS_DIR, name), bytes);
     saved.push(name);
   }

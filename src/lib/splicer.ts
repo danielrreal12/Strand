@@ -60,15 +60,15 @@ export type RoutePlan = {
 };
 
 export const STATUS_LABEL: Record<NodeStatus, string> = {
-  pending: "Pendiente",
-  progress: "En proceso",
-  completed: "Completado",
-  excluded: "Reasignado",
+  pending: "Pending",
+  progress: "In progress",
+  completed: "Completed",
+  excluded: "Reassigned",
 };
 
 export const REVIEW_LABEL: Record<string, string> = {
-  review_data: "Revisar datos",
-  check_reassignment: "Consultar reasignación",
+  review_data: "Review data",
+  check_reassignment: "Check reassignment",
 };
 
 export const PREPARED_ROUTE: RoutePlan = {
@@ -100,15 +100,15 @@ export function money(amount: number) {
 }
 
 export function formatShort(iso: string) {
-  if (!iso) return "Sin fecha";
-  return new Date(`${iso}T12:00:00`).toLocaleDateString("es-MX", {
+  if (!iso) return "No date";
+  return new Date(`${iso}T12:00:00`).toLocaleDateString("en-US", {
     day: "numeric",
     month: "short",
   });
 }
 
 export function formatLong(iso: string) {
-  return new Date(`${iso}T12:00:00`).toLocaleDateString("es-MX", {
+  return new Date(`${iso}T12:00:00`).toLocaleDateString("en-US", {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -116,8 +116,7 @@ export function formatLong(iso: string) {
 }
 
 export function formatMonth(date: Date) {
-  const label = date.toLocaleDateString("es-MX", { month: "long", year: "numeric" });
-  return label.charAt(0).toUpperCase() + label.slice(1);
+  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }
 
 export function isoFromDate(date: Date) {
@@ -135,7 +134,7 @@ export function billingPeriod(iso: string) {
       start: "2026-10-13",
       end: "2026-10-16",
       payDate: "2026-10-30",
-      label: "Primer corte · Martes a viernes",
+      label: "First cut · Tuesday to Friday",
       exception: true,
     };
   }
@@ -144,7 +143,7 @@ export function billingPeriod(iso: string) {
       start: "2026-10-19",
       end: "2026-10-22",
       payDate: "2026-11-06",
-      label: "Segundo corte · Lunes a jueves",
+      label: "Second cut · Monday to Thursday",
       exception: true,
     };
   }
@@ -153,7 +152,7 @@ export function billingPeriod(iso: string) {
       start: "2026-10-17",
       end: "2026-10-18",
       payDate: "",
-      label: "Fuera de los cortes iniciales · Por confirmar",
+      label: "Outside the opening cuts · To confirm",
       exception: true,
     };
   }
@@ -163,7 +162,7 @@ export function billingPeriod(iso: string) {
     start: start.toISOString().slice(0, 10),
     end: new Date(start.getTime() + 6 * DAY).toISOString().slice(0, 10),
     payDate: new Date(start.getTime() + 21 * DAY).toISOString().slice(0, 10),
-    label: "Viernes a jueves",
+    label: "Friday to Thursday",
     exception: false,
   };
 }
@@ -234,10 +233,10 @@ export function urgency(node: SplicerNode, day: string) {
   const due = new Date(`${node.due}T12:00:00Z`).getTime();
   const current = new Date(`${day}T12:00:00Z`).getTime();
   const days = Math.round((due - current) / DAY);
-  if (days < 0) return { kind: "overdue", label: `Vencido hace ${-days} ${days === -1 ? "día" : "días"}` };
-  if (days === 0) return { kind: "urgent", label: "Vence hoy" };
-  if (days === 1) return { kind: "urgent", label: "Vence mañana" };
-  if (days <= 2) return { kind: "urgent", label: `Vence en ${days} días` };
+  if (days < 0) return { kind: "overdue", label: `Overdue by ${-days} ${days === -1 ? "day" : "days"}` };
+  if (days === 0) return { kind: "urgent", label: "Due today" };
+  if (days === 1) return { kind: "urgent", label: "Due tomorrow" };
+  if (days <= 2) return { kind: "urgent", label: `Due in ${days} days` };
   return { kind: "", label: "" };
 }
 
@@ -350,23 +349,23 @@ export function clearSession() {
 
 export function csvFor(nodes: SplicerNode[]) {
   const header = [
-    "Nodo",
-    "Estado",
-    "Inicio autorizado",
-    "Fecha limite",
-    "Programado",
-    "Completado",
-    "Pago previsto",
-    "Pago recibido",
-    "Generado USD",
-    "Factura",
+    "Node",
+    "Status",
+    "Authorized start",
+    "Due date",
+    "Scheduled",
+    "Completed",
+    "Expected pay",
+    "Payment received",
+    "Generated USD",
+    "Invoice",
     "Wise Job",
     "GPS",
-    "Inicio corte billing",
-    "Fin corte billing",
-    "Mapa PDF",
-    "Aviso seguimiento",
-    "Incluido en billing",
+    "Billing cut start",
+    "Billing cut end",
+    "Map PDF",
+    "Follow-up",
+    "Included in billing",
   ];
   const rows = nodes.map((node) => {
     const period = node.status === "completed" && billable(node) && node.completed ? billingPeriod(node.completed) : null;
@@ -385,9 +384,9 @@ export function csvFor(nodes: SplicerNode[]) {
       node.gps,
       period?.start ?? "",
       period?.end ?? "",
-      node.map || "Mapa por recibir",
+      node.map || "Map still coming",
       REVIEW_LABEL[node.reviewStatus] || "",
-      node.billingIncluded === false ? "No" : "Sí",
+      node.billingIncluded === false ? "No" : "Yes",
     ];
   });
   return `\uFEFF${[header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n")}`;
@@ -408,16 +407,16 @@ export function downloadCsv(nodes: SplicerNode[], today: string) {
 
 export function calendarHelp(mode: CalendarMode) {
   if (mode === "scheduled") {
-    return "Agenda automática: los pendientes pasan al siguiente día tras tu último reporte, respetando el inicio disponible y las fechas futuras que programes.";
+    return "Automatic agenda: open nodes roll to the next day after your last report, keeping the authorized start and any date you schedule.";
   }
   if (mode === "start") {
-    return "Fecha original en que cada nodo puede comenzar. Sin fecha de inicio: disponible en la agenda automática.";
+    return "The original day each node can start. With no start date, it stays available on the automatic agenda.";
   }
   if (mode === "due") {
-    return "Fechas límite originales; los vencidos permanecen pendientes hasta que confirmes su producción.";
+    return "Original due dates. Overdue nodes stay open until you confirm the work.";
   }
-  if (mode === "completed") return "Nodos agrupados por su fecha real de completado.";
-  return "Pagos esperados; sólo se marcan recibidos cuando lo confirmas.";
+  if (mode === "completed") return "Nodes grouped by the day they were actually finished.";
+  return "Expected payments. They count as received only after you confirm them.";
 }
 
 export function monthGrid(month: Date) {

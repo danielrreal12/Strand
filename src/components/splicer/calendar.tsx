@@ -33,7 +33,7 @@ export function WeekCharts() {
     const date = new Date(monday);
     date.setDate(monday.getDate() + index);
     const key = isoFromDate(date);
-    const label = date.toLocaleDateString("es-MX", { weekday: "short" }).replace(".", "");
+    const label = date.toLocaleDateString("en-US", { weekday: "short" });
     return { key, label, count: completed.filter((node) => node.completed === key).length };
   });
   const doneThisWeek = completed.filter((node) => node.completed >= mondayIso && node.completed <= today).length;
@@ -51,11 +51,11 @@ export function WeekCharts() {
       <section className="panel chart-panel">
         <div className="panel-heading">
           <div>
-            <h2>Nodos completados por día</h2>
-            <p>Producción de esta semana · {total} nodos</p>
+            <h2>Nodes completed by day</h2>
+            <p>This week’s production · {total} nodes</p>
           </div>
         </div>
-        <div className="bar-chart" role="img" aria-label="Nodos completados por día de esta semana">
+        <div className="bar-chart" role="img" aria-label="Nodes completed by day this week">
           {days.map((day) => (
             <div className="bar-column" key={day.key}>
               <strong>{day.count || ""}</strong>
@@ -68,8 +68,8 @@ export function WeekCharts() {
       <section className="panel chart-panel">
         <div className="panel-heading">
           <div>
-            <h2>Avance semanal</h2>
-            <p>Nodos completados frente al plan de esta semana</p>
+            <h2>Weekly progress</h2>
+            <p>Completed vs this week’s plan</p>
           </div>
         </div>
         <div className="week-progress">
@@ -79,11 +79,11 @@ export function WeekCharts() {
           <div className="week-legend">
             <span>
               <i />
-              Completados <b>{doneThisWeek}</b>
+              Completed <b>{doneThisWeek}</b>
             </span>
             <span>
               <i className="pending-key" />
-              Pendientes del plan <b>{Math.max(0, plan - doneThisWeek)}</b>
+              Still on the plan <b>{Math.max(0, plan - doneThisWeek)}</b>
             </span>
           </div>
         </div>
@@ -109,10 +109,10 @@ export function CalendarView() {
           <div className="month">
             <h2>{formatMonth(splicer.month)}</h2>
             <div>
-              <button aria-label="Mes anterior" onClick={() => splicer.setMonth(new Date(splicer.month.getFullYear(), splicer.month.getMonth() - 1, 1))}>
+              <button aria-label="Previous month" onClick={() => splicer.setMonth(new Date(splicer.month.getFullYear(), splicer.month.getMonth() - 1, 1))}>
                 <ChevronLeft size={17} />
               </button>
-              <button aria-label="Mes siguiente" onClick={() => splicer.setMonth(new Date(splicer.month.getFullYear(), splicer.month.getMonth() + 1, 1))}>
+              <button aria-label="Next month" onClick={() => splicer.setMonth(new Date(splicer.month.getFullYear(), splicer.month.getMonth() + 1, 1))}>
                 <ChevronRight size={17} />
               </button>
             </div>
@@ -123,19 +123,19 @@ export function CalendarView() {
                 splicer.setSelectedDay(splicer.today);
               }}
             >
-              Hoy
+              Today
             </button>
           </div>
-          <select aria-label="Tipo de fecha" value={splicer.calendarMode} onChange={(event) => splicer.setCalendarMode(event.target.value as CalendarMode)}>
-            <option value="scheduled">Agenda automática</option>
-            <option value="start">Inicio disponible</option>
-            <option value="due">Fechas límite</option>
-            <option value="completed">Completados</option>
-            <option value="payment">Pagos previstos</option>
+          <select aria-label="Date type" value={splicer.calendarMode} onChange={(event) => splicer.setCalendarMode(event.target.value as CalendarMode)}>
+            <option value="scheduled">Automatic agenda</option>
+            <option value="start">Available start</option>
+            <option value="due">Due dates</option>
+            <option value="completed">Completed</option>
+            <option value="payment">Expected payments</option>
           </select>
         </div>
         <div className="agenda-notice">
-          Agenda de pendientes: <strong>{formatShort(splicer.anchor)}</strong> · {open.length} nodos por completar. Rojo: vencidos o a 2 días del límite.{" "}
+          Open-node agenda: <strong>{formatShort(splicer.anchor)}</strong> · {open.length} nodes left. Red: overdue or within 2 days of the due date.{" "}
           {missing.length ? (
             <button
               className="notice-link"
@@ -145,13 +145,13 @@ export function CalendarView() {
                 splicer.setQuery("");
               }}
             >
-              {missing.length} mapas por recibir · Ver lista
+              {missing.length} maps still coming · See list
             </button>
           ) : null}
         </div>
         <div className="calendar-help">{calendarHelp(splicer.calendarMode)}</div>
         <div className="weekdays">
-          {"Lun Mar Mié Jue Vie Sáb Dom".split(" ").map((day) => (
+          {"Mon Tue Wed Thu Fri Sat Sun".split(" ").map((day) => (
             <span key={day}>{day}</span>
           ))}
         </div>
@@ -180,7 +180,7 @@ export function CalendarView() {
                     <button
                       key={node.code}
                       className={`event ${node.status} ${flag.kind}${node.map ? "" : " missing-map-event"}`}
-                      title={`${node.code} · ${flag.label || STATUS_LABEL[node.status]} · Límite: ${formatShort(node.due)}${node.map ? "" : " · Mapa por recibir"}`}
+                      title={`${node.code} · ${flag.label || STATUS_LABEL[node.status]} · Due: ${formatShort(node.due)}${node.map ? "" : " · Map still coming"}`}
                       onClick={(event) => {
                         event.stopPropagation();
                         splicer.setEditing({ ...node });
@@ -189,7 +189,7 @@ export function CalendarView() {
                       <span />
                       {node.code}
                       {!node.map ? (
-                        <small className="map-question" aria-label="Mapa por recibir">
+                        <small className="map-question" aria-label="Map still coming">
                           PDF?
                         </small>
                       ) : null}
@@ -197,7 +197,7 @@ export function CalendarView() {
                     </button>
                   );
                 })}
-                {events.length > 3 ? <small className="more">+{events.length - 3} nodos</small> : null}
+                {events.length > 3 ? <small className="more">+{events.length - 3} nodes</small> : null}
               </div>
             );
           })}
@@ -205,33 +205,33 @@ export function CalendarView() {
         <div className="legend">
           <span>
             <i />
-            Pendiente
+            Pending
           </span>
           <span>
             <i className="blue" />
-            En proceso
+            In progress
           </span>
           <span>
             <i className="green-dot" />
-            Completado
+            Completed
           </span>
           <span>
             <i className="red-dot" />
-            Vencido o vence en 2 días
+            Overdue or due within 2 days
           </span>
           <span>
             <i className="yellow-dot" />
-            Mapa por recibir
+            Map still coming
           </span>
-          <span>☾ Corte nocturno</span>
+          <span>☾ Night cut</span>
         </div>
       </section>
       <section className="panel agenda">
         <div className="agenda-head">
-          <span>AGENDA DEL DÍA</span>
+          <span>DAY AGENDA</span>
           <h2>{formatLong(splicer.selectedDay)}</h2>
           <p>
-            {agenda.length} nodos · {splicer.calendarMode === "payment" ? "pago previsto" : "nodos en agenda"}
+            {agenda.length} nodes · {splicer.calendarMode === "payment" ? "expected pay" : "on the agenda"}
           </p>
         </div>
         <button
@@ -241,7 +241,7 @@ export function CalendarView() {
             splicer.setRouteMode("team");
           }}
         >
-          Ver mapa y armar ruta ↗
+          Open the map and build the route ↗
         </button>
         <div className="agenda-list">
           {agenda.length ? (
@@ -260,13 +260,13 @@ export function CalendarView() {
                     </strong>
                     <NodeNotices node={node} />
                     <small>
-                      Inicio: {node.start ? formatShort(node.start) : "Sin fecha indicada"} · Límite: {formatShort(node.due)}
+                      Start: {node.start ? formatShort(node.start) : "No date given"} · Due: {formatShort(node.due)}
                     </small>
-                    {node.night ? <small>00:00–06:00 · Corte nocturno</small> : null}
+                    {node.night ? <small>00:00–06:00 · Night cut</small> : null}
                     {flag.label ? <small className="deadline-label">{flag.label}</small> : null}
                     <small>
                       <MapPin size={12} />
-                      {node.address || node.gps || "Ubicación por confirmar"}
+                      {node.address || node.gps || "Location to confirm"}
                     </small>
                   </div>
                   <ChevronRight size={15} />
@@ -276,17 +276,17 @@ export function CalendarView() {
           ) : (
             <div className="empty">
               <CalendarDaysIcon />
-              <strong>Un día por organizar</strong>
+              <strong>Nothing scheduled</strong>
               <p>
-                Selecciona otra fecha o programa
+                Pick another date, or schedule
                 <br />
-                un nodo desde su ficha.
+                a node from its sheet.
               </p>
             </div>
           )}
         </div>
         <div className="agenda-total">
-          <span>{splicer.calendarMode === "payment" ? "Pago esperado" : "Valor de los nodos"}</span>
+          <span>{splicer.calendarMode === "payment" ? "Expected pay" : "Node value"}</span>
           <strong>
             {money(agenda.length * PAY_PER_NODE)} <small>USD</small>
           </strong>

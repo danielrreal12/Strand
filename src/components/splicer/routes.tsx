@@ -39,7 +39,7 @@ declare global {
 let leafletPromise: Promise<LeafletLib> | null = null;
 
 function loadLeaflet() {
-  if (typeof window === "undefined") return Promise.reject(new Error("sin ventana"));
+  if (typeof window === "undefined") return Promise.reject(new Error("No window"));
   if (window.L) return Promise.resolve(window.L);
   leafletPromise ??= new Promise((resolve, reject) => {
     if (!document.getElementById("leaflet-css")) {
@@ -51,8 +51,8 @@ function loadLeaflet() {
     }
     const script = document.createElement("script");
     script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    script.onload = () => (window.L ? resolve(window.L) : reject(new Error("No se pudo cargar el mapa. Recarga la página.")));
-    script.onerror = () => reject(new Error("No se pudo cargar el mapa. Recarga la página."));
+    script.onload = () => (window.L ? resolve(window.L) : reject(new Error("Couldn’t load the map. Reload the page.")));
+    script.onerror = () => reject(new Error("Couldn’t load the map. Reload the page."));
     document.body.appendChild(script);
   });
   return leafletPromise;
@@ -79,10 +79,10 @@ export function RoutesView() {
     <>
       <div className="team-mode">
         <button className={splicer.routeMode === "team" ? "primary" : "text-button"} onClick={() => splicer.setRouteMode("team")}>
-          Daniel e Iván
+          Daniel and Iván
         </button>
         <button className={splicer.routeMode === "individual" ? "primary" : "text-button"} onClick={() => splicer.setRouteMode("individual")}>
-          Ruta individual / Todos los nodos
+          Individual route / All nodes
         </button>
       </div>
       {splicer.routeMode === "team" ? (
@@ -125,7 +125,7 @@ function TeamRoute({ day, setDay, plan }: { day: string; setDay: (day: string) =
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         })
           .addTo(created)
-          .on("tileerror", () => setMapError("No se pudo cargar parte del mapa. La lista y los enlaces de navegación siguen disponibles."));
+          .on("tileerror", () => setMapError("Part of the map failed to load. The list and navigation links still work."));
         const bounds: [number, number][] = [];
         const paint = (crew: SplicerNode[], prefix: string, color: string, className: string) => {
           const line: [number, number][] = [];
@@ -145,7 +145,7 @@ function TeamRoute({ day, setDay, plan }: { day: string; setDay: (day: string) =
               title: node.code,
             })
               .addTo(created)
-              .bindPopup(`<strong>${node.code}</strong><br>${node.address || node.gps}<br><a target="_blank" rel="noreferrer" href="${googleSearch(node.gps)}">Abrir en Google Maps</a>`);
+              .bindPopup(`<strong>${node.code}</strong><br>${node.address || node.gps}<br><a target="_blank" rel="noreferrer" href="${googleSearch(node.gps)}">Open in Google Maps</a>`);
           });
           if (line.length > 1) L.polyline(line, { color, dashArray: "6 8", weight: 3 }).addTo(created);
         };
@@ -154,7 +154,7 @@ function TeamRoute({ day, setDay, plan }: { day: string; setDay: (day: string) =
         if (bounds.length > 1) created.fitBounds(bounds, { padding: [28, 28] });
         else if (bounds.length === 1) created.setView(bounds[0], 13);
       })
-      .catch((caught) => setMapError(caught instanceof Error ? caught.message : "No se pudo cargar el mapa. Recarga la página."));
+      .catch((caught) => setMapError(caught instanceof Error ? caught.message : "Couldn’t load the map. Reload the page."));
     return () => {
       cancelled = true;
       map?.remove();
@@ -182,17 +182,17 @@ function TeamRoute({ day, setDay, plan }: { day: string; setDay: (day: string) =
     <>
       <div className="panel route-toolbar">
         <div>
-          <h2>Daniel e Iván · Rutas del día</h2>
-          <p>Reparto diario a las 8 p. m. para la jornada siguiente · Hora de Houston</p>
+          <h2>Daniel and Iván · Today’s routes</h2>
+          <p>Daily split at 8 p.m. for the next shift · Houston time</p>
         </div>
         <label>
-          Fecha de trabajo
+          Work date
           <input type="date" value={day} onChange={(event) => event.target.value && setDay(event.target.value)} />
         </label>
         <label>
-          Mostrar
-          <select defaultValue="both" aria-label="Mostrar">
-            <option value="both">Ambas rutas</option>
+          Show
+          <select defaultValue="both" aria-label="Show">
+            <option value="both">Both routes</option>
           </select>
         </label>
       </div>
@@ -202,48 +202,48 @@ function TeamRoute({ day, setDay, plan }: { day: string; setDay: (day: string) =
         </p>
       ) : null}
       <div className="panel route-map-panel team-map">
-        <div ref={mapRef} className="route-map" role="region" aria-label="Mapa de las rutas de Daniel e Iván" />
+        <div ref={mapRef} className="route-map" role="region" aria-label="Map of Daniel and Iván’s routes" />
         <div className="route-legend">
-          <strong className="daniel-label">● Daniel · Azul</strong>
-          <strong className="ivan-label">● Iván · Naranja</strong>
+          <strong className="daniel-label">● Daniel · Blue</strong>
+          <strong className="ivan-label">● Iván · Orange</strong>
         </div>
-        <p className="route-help">Agrupadas por cercanía entre coordenadas. Líneas punteadas: orden de paradas; Google Maps calcula las calles y el tráfico. Los números D e I identifican a cada persona.</p>
+        <p className="route-help">Grouped by how close the coordinates are. Dotted lines are the stop order; Google Maps handles streets and traffic. D and I mark each person.</p>
       </div>
       <div className="panel team-status">
-        <strong>{plan.saved ? "Reparto guardado en este dispositivo" : "Vista previa · Aún no guardada"}</strong>
+        <strong>{plan.saved ? "Saved on this device" : "Preview · Not saved yet"}</strong>
         <p>
-          {plan.extra ? `Nodo extra de este reparto: ${plan.extra}.` : "Reparto sin nodo extra."} Próximo extra: {plan.nextExtra}.
+          {plan.extra ? `Extra node this split: ${plan.extra}.` : "This split has no extra node."} Next extra: {plan.nextExtra}.
         </p>
         {!plan.saved ? (
           <button className="primary" onClick={() => splicer.saveRoute({ ...plan, day, saved: true })}>
-            Guardar reparto de este día
+            Save this day’s split
           </button>
         ) : null}
         <button className="text-button" onClick={() => setEditing((current) => !current)}>
-          {editing ? "Cancelar edición" : "Editar reparto manualmente"}
+          {editing ? "Cancel edit" : "Edit the split by hand"}
         </button>
         {editing ? (
           <div className="team-manual-editor">
-            <p>Escribe los nodos en el orden de visita, separados por comas. Se guardarán para la fecha seleccionada.</p>
+            <p>Type the nodes in visit order, separated by commas. They are saved for the selected date.</p>
             <label>
               Daniel
               <textarea rows={3} value={danielText} onChange={(event) => setDanielText(event.target.value)} />
             </label>
             <label>
-              Tu ruta · Iván
+              Your route · Iván
               <textarea rows={3} value={ivanText} onChange={(event) => setIvanText(event.target.value)} />
             </label>
             <button className="primary" onClick={saveManual}>
-              Guardar reparto de este día
+              Save this day’s split
             </button>
           </div>
         ) : null}
       </div>
       <div className="team-cards">
         <CrewCard title="Daniel" className="crew-card-daniel" nodes={daniel} />
-        <CrewCard title="Tu ruta · Iván" className="crew-card-ivan" nodes={ivan} />
+        <CrewCard title="Your route · Iván" className="crew-card-ivan" nodes={ivan} />
       </div>
-      <p className="route-help">Los completados se ocultan de la ruta activa sin cambiar la asignación guardada. El reparto del 3 de noviembre deja B619A con Iván: es el único nodo pendiente y su inicio autorizado es el 27 de octubre.</p>
+      <p className="route-help">Completed nodes hide from the active route without changing the saved assignment. The Nov 3 split leaves B619A with Iván: it is the only pending node, and its authorized start is Oct 27.</p>
     </>
   );
 }
@@ -257,7 +257,7 @@ function CrewCard({ title, className, nodes }: { title: string; className: strin
       <div className="panel-heading">
         <div>
           <h2>{title}</h2>
-          <p>{nodes.length ? `${nodes.length} paradas` : "Sin paradas en esta fecha"}</p>
+          <p>{nodes.length ? `${nodes.length} stops` : "No stops this date"}</p>
         </div>
       </div>
       <ol className="route-stop-list">
@@ -266,10 +266,10 @@ function CrewCard({ title, className, nodes }: { title: string; className: strin
             <span className="stop-number">{index + 1}</span>
             <div>
               <strong>{node.code}</strong>
-              <small>{node.address || node.gps || "Ubicación por confirmar"}</small>
+              <small>{node.address || node.gps || "Location to confirm"}</small>
               {node.gps ? (
                 <a href={googleSearch(node.gps)} target="_blank" rel="noreferrer">
-                  Navegar a esta parada
+                  Navigate to this stop
                 </a>
               ) : null}
             </div>
@@ -279,17 +279,17 @@ function CrewCard({ title, className, nodes }: { title: string; className: strin
       <div className="route-navigation">
         {url ? (
           <a className="primary" href={url} target="_blank" rel="noreferrer">
-            Abrir ruta en Google Maps
+            Open route in Google Maps
           </a>
         ) : (
-          <p className="route-help">Esta ruta no tiene paradas con coordenadas.</p>
+          <p className="route-help">This route has no stops with coordinates.</p>
         )}
         {legs.length > 1 ? (
           <>
-            <p className="route-help">En navegador móvil, usa estos tramos para conservar todas las paradas:</p>
+            <p className="route-help">On a phone browser, use these legs to keep every stop:</p>
             {legs.map((leg) => (
               <a key={leg.start} className="text-button" href={leg.url} target="_blank" rel="noreferrer">
-                Tramo {leg.start}–{leg.end} ↗
+                Leg {leg.start}–{leg.end} ↗
               </a>
             ))}
           </>
@@ -337,7 +337,7 @@ function IndividualRoute({ day, setDay }: { day: string; setDay: (day: string) =
         if (origin) {
           bounds.push([origin.lat, origin.lng]);
           line.push([origin.lat, origin.lng]);
-          L.circleMarker([origin.lat, origin.lng], { radius: 8, color: "#214c3b", fillColor: "#d3eea5", fillOpacity: 1 }).addTo(created);
+          L.circleMarker([origin.lat, origin.lng], { radius: 8, color: "#1b3a63", fillColor: "#e0b089", fillOpacity: 1 }).addTo(created);
         }
         ordered.forEach((node, index) => {
           const point = parseGps(node.gps);
@@ -355,12 +355,12 @@ function IndividualRoute({ day, setDay }: { day: string; setDay: (day: string) =
             title: node.code,
           })
             .addTo(created)
-            .bindPopup(`<strong>${node.code}</strong><br><a target="_blank" rel="noreferrer" href="${googleSearch(node.gps)}">Abrir en Google Maps</a>`);
+            .bindPopup(`<strong>${node.code}</strong><br><a target="_blank" rel="noreferrer" href="${googleSearch(node.gps)}">Open in Google Maps</a>`);
         });
-        if (line.length > 1) L.polyline(line, { color: "#597a42", dashArray: "6 8", weight: 3 }).addTo(created);
+        if (line.length > 1) L.polyline(line, { color: "#1b3a63", dashArray: "6 8", weight: 3 }).addTo(created);
         if (bounds.length > 1) created.fitBounds(bounds, { padding: [28, 28] });
       })
-      .catch(() => setMessage("No se pudo cargar el mapa. Recarga la página."));
+      .catch(() => setMessage("Couldn’t load the map. Reload the page."));
     return () => {
       cancelled = true;
       map?.remove();
@@ -379,15 +379,15 @@ function IndividualRoute({ day, setDay }: { day: string; setDay: (day: string) =
 
   function useLocation() {
     if (!navigator.geolocation) {
-      setMessage("Este navegador no ofrece ubicación. Puedes ordenar las paradas manualmente.");
+      setMessage("This browser doesn’t share location. You can order the stops by hand.");
       return;
     }
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setOrigin({ lat: position.coords.latitude, lng: position.coords.longitude });
-        setMessage("Salida actualizada. Pulsa “Ordenar por cercanía” para reorganizar.");
+        setMessage("Updated start. Tap Sort by distance to reorder.");
       },
-      () => setMessage("No se obtuvo tu ubicación. Puedes continuar y elegir la salida en Google Maps."),
+      () => setMessage("Couldn’t get your location. You can still pick the start in Google Maps."),
     );
   }
 
@@ -401,43 +401,43 @@ function IndividualRoute({ day, setDay }: { day: string; setDay: (day: string) =
     <>
       <div className="panel route-toolbar">
         <div>
-          <h2>Ruta individual</h2>
-          <p>Orden sugerido por distancia entre coordenadas, sin tráfico. Puedes ajustarlo con las flechas.</p>
+          <h2>Individual route</h2>
+          <p>Suggested order by straight-line distance, not traffic. Adjust it with the arrows.</p>
         </div>
         <label>
-          Fecha de trabajo
+          Work date
           <input type="date" value={day} onChange={(event) => event.target.value && setDay(event.target.value)} />
         </label>
         <label>
-          Mostrar
+          Show
           <select value={scope} onChange={(event) => setScope(event.target.value as "day" | "all")}>
-            <option value="day">Pendientes del día</option>
-            <option value="all">Todos los nodos</option>
+            <option value="day">Stops for the day</option>
+            <option value="all">All nodes</option>
           </select>
         </label>
         <button className="text-button" onClick={() => setOrder(orderByProximity(ordered, origin).map((node) => node.code))}>
-          Ordenar por cercanía
+          Sort by distance
         </button>
         <button className="text-button" onClick={useLocation}>
-          Usar mi ubicación de salida
+          Use my location as the start
         </button>
         {origin ? (
           <button className="text-button" onClick={() => setOrigin(null)}>
-            Quitar salida
+            Clear start
           </button>
         ) : null}
       </div>
       {message ? <p className="route-help">{message}</p> : null}
       <div className="route-layout">
         <div className="panel route-map-panel">
-          <div ref={mapRef} className="route-map" role="region" aria-label="Mapa de la ruta" />
-          <p className="route-help">Salida: Google Maps usará tu ubicación o te pedirá elegirla. La selección y el orden se guardan por fecha en este dispositivo mientras la página sigue abierta.</p>
+          <div ref={mapRef} className="route-map" role="region" aria-label="Route map" />
+          <p className="route-help">Start: Google Maps will use your location or ask you to pick one. The selection and order stay on this device for the date while the page is open.</p>
         </div>
         <section className="panel">
           <div className="panel-heading">
             <div>
-              <h2>{ordered.length} paradas</h2>
-              <p>{scope === "day" ? "Pendientes de la fecha elegida" : "Todos los nodos activos con coordenadas"}</p>
+              <h2>{ordered.length} stops</h2>
+              <p>{scope === "day" ? "Open nodes for the chosen date" : "Every active node with coordinates"}</p>
             </div>
           </div>
           <ol className="route-stop-list">
@@ -448,31 +448,31 @@ function IndividualRoute({ day, setDay }: { day: string; setDay: (day: string) =
                   <strong>{node.code}</strong>
                   <small>{node.address || node.gps}</small>
                   <a href={googleSearch(node.gps)} target="_blank" rel="noreferrer">
-                    Navegar
+                    Navigate
                   </a>
                 </div>
                 <div className="route-order">
-                  <button aria-label={`Subir ${node.code}`} onClick={() => move(index, -1)} disabled={index === 0}>
+                  <button aria-label={`Move ${node.code} up`} onClick={() => move(index, -1)} disabled={index === 0}>
                     ↑
                   </button>
-                  <button aria-label={`Bajar ${node.code}`} onClick={() => move(index, 1)} disabled={index === ordered.length - 1}>
+                  <button aria-label={`Move ${node.code} down`} onClick={() => move(index, 1)} disabled={index === ordered.length - 1}>
                     ↓
                   </button>
                 </div>
               </li>
             ))}
           </ol>
-          {!ordered.length ? <div className="empty">No hay nodos activos con coordenadas para esta vista.</div> : null}
+          {!ordered.length ? <div className="empty">No active nodes with coordinates in this view.</div> : null}
           <div className="route-navigation">
             {points.length ? (
               <a className="primary" href={googleDirections(points)} target="_blank" rel="noreferrer">
-                Abrir en Google Maps
+                Open in Google Maps
               </a>
             ) : null}
             {legs.length > 1
               ? legs.map((leg) => (
                   <a key={leg.start} className="text-button" href={leg.url} target="_blank" rel="noreferrer">
-                    Tramo {leg.start}–{leg.end} ↗
+                    Leg {leg.start}–{leg.end} ↗
                   </a>
                 ))
               : null}

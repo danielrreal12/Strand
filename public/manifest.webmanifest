@@ -1,12 +1,12 @@
 {
   "name": "Splicer · Optimum",
   "short_name": "Splicer",
-  "description": "Calendario de nodos, producción y billing de Optimum Fiber.",
+  "description": "Node calendar, production, and billing for Optimum Fiber.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f7f9f5",
-  "theme_color": "#f7f9f5",
+  "background_color": "#f3f5f8",
+  "theme_color": "#f3f5f8",
   "icons": [
     {
       "src": "/icon.svg",

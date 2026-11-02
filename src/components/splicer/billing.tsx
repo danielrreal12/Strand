@@ -17,7 +17,7 @@ export function BillingView() {
   const completed = splicer.nodes.filter((node) => node.status === "completed");
   const receivable = completed.filter((node) => billable(node) && !node.paidDate);
   const byPay = receivable.reduce<Record<string, typeof receivable>>((groups, node) => {
-    const key = node.payDate || "Sin fecha";
+    const key = node.payDate || "No date";
     groups[key] ??= [];
     groups[key].push(node);
     return groups;
@@ -35,22 +35,22 @@ export function BillingView() {
       <section className="panel weekly-billing">
         <div className="panel-heading">
           <div>
-            <h2>Billing por semana</h2>
-            <p>$350 USD / nodo</p>
+            <h2>Billing by week</h2>
+            <p>$350 USD / node</p>
           </div>
         </div>
-        <p className="production-rule">Los reasignados y los marcados fuera de billing quedan fuera de producción cobrable. El pago se confirma sólo cuando lo registras.</p>
+        <p className="production-rule">Reassigned nodes and nodes marked out of billing stay out of payable production. Pay counts only after you record it.</p>
         <div className="table-scroll">
           <table>
             <thead>
               <tr>
-                <th>PERIODO DE PRODUCCIÓN</th>
-                <th>PAGO PROGRAMADO</th>
-                <th>NODOS</th>
-                <th>GENERADO USD</th>
-                <th>RECIBIDO USD</th>
-                <th>POR COBRAR USD</th>
-                <th>ESTADO DEL CORTE</th>
+                <th>PRODUCTION PERIOD</th>
+                <th>SCHEDULED PAY</th>
+                <th>NODES</th>
+                <th>GENERATED USD</th>
+                <th>RECEIVED USD</th>
+                <th>TO COLLECT USD</th>
+                <th>CUT STATUS</th>
               </tr>
             </thead>
             <tbody>
@@ -62,14 +62,14 @@ export function BillingView() {
                     </strong>
                     <small className="sub">{week.label}</small>
                   </td>
-                  <td>{week.payDate ? formatShort(week.payDate) : "Por confirmar"}</td>
+                  <td>{week.payDate ? formatShort(week.payDate) : "To confirm"}</td>
                   <td>{week.count}</td>
                   <td className="amount">{money(week.earned)}</td>
                   <td>{money(week.received)}</td>
                   <td className="amount">{money(week.receivable)}</td>
                   <td>
                     <span className={`pill ${week.end < splicer.today ? "completed" : "progress"}`}>
-                      {week.start > splicer.today ? "Próximo" : week.end < splicer.today ? "Periodo terminado" : "En curso"}
+                      {week.start > splicer.today ? "Upcoming" : week.end < splicer.today ? "Cut closed" : "In progress"}
                     </span>
                   </td>
                 </tr>
@@ -83,17 +83,17 @@ export function BillingView() {
             .map((week) => (
               <details key={week.start}>
                 <summary>
-                  Ver nodos · {formatShort(week.start)} – {formatShort(week.end)} · {week.count} nodos · {money(week.earned)}
+                  View nodes · {formatShort(week.start)} – {formatShort(week.end)} · {week.count} nodes · {money(week.earned)}
                 </summary>
                 <div className="table-scroll">
                   <table>
                     <thead>
                       <tr>
-                        <th>NODO</th>
+                        <th>NODE</th>
                         <th>WISE JOB</th>
-                        <th>COMPLETADO</th>
-                        <th>PAGO PREVISTO</th>
-                        <th>PAGO RECIBIDO</th>
+                        <th>COMPLETED</th>
+                        <th>EXPECTED PAY</th>
+                        <th>PAYMENT RECEIVED</th>
                         <th>USD</th>
                       </tr>
                     </thead>
@@ -105,10 +105,10 @@ export function BillingView() {
                               {node.code}
                             </button>
                           </td>
-                          <td>{node.job || "Sin número WISE"}</td>
+                          <td>{node.job || "No Wise number"}</td>
                           <td>{formatShort(node.completed)}</td>
                           <td>{formatShort(node.payDate)}</td>
-                          <td>{node.paidDate ? formatShort(node.paidDate) : "Pendiente"}</td>
+                          <td>{node.paidDate ? formatShort(node.paidDate) : "Pending"}</td>
                           <td className="amount">$350</td>
                         </tr>
                       ))}
@@ -126,7 +126,7 @@ export function BillingView() {
                       })
                     }
                   >
-                    Asignar fecha de pago a este corte <ArrowUpRight size={14} />
+                    Set a pay date for this cut <ArrowUpRight size={14} />
                   </button>
                 </div>
               </details>
@@ -136,11 +136,11 @@ export function BillingView() {
       <section className="panel">
         <div className="panel-heading">
           <div>
-            <h2>Próximos pagos</h2>
-            <p>Lo que vas a recibir, agrupado por fecha.</p>
+            <h2>Upcoming payments</h2>
+            <p>What you’ll receive, grouped by date.</p>
           </div>
           <button className="text-button" onClick={() => splicer.openBatch({ mode: "payment", codes: receivable.map((node) => node.code) })}>
-            Asignar fecha <ArrowUpRight size={16} />
+            Set date <ArrowUpRight size={16} />
           </button>
         </div>
         {Object.keys(byPay).length ? (
@@ -153,9 +153,9 @@ export function BillingView() {
                     <Wallet size={20} />
                   </span>
                   <div>
-                    <strong>{day === "Sin fecha" ? "Sin fecha de pago" : new Date(`${day}T12:00:00`).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}</strong>
+                    <strong>{day === "No date" ? "No pay date" : new Date(`${day}T12:00:00`).toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" })}</strong>
                     <small>
-                      {group.length} nodos · {day !== "Sin fecha" && day < splicer.today ? "Pago previsto vencido" : "Pendiente de recibir"}
+                      {group.length} nodes · {day !== "No date" && day < splicer.today ? "Expected pay overdue" : "Waiting to be received"}
                     </small>
                   </div>
                   <strong>{money(group.length * PAY_PER_NODE)}</strong>
@@ -168,17 +168,18 @@ export function BillingView() {
                   ))}
                 </div>
                 <button className="text-button" onClick={() => splicer.openBatch({ mode: "received", codes: group.map((node) => node.code) })}>
-                  Registrar pago recibido
+                  Record payment received
                 </button>
               </div>
             ))
         ) : (
           <div className="empty">
             <Wallet size={30} />
-            <strong>Aquí verás tus próximos pagos</strong>
+            <strong>Upcoming payments will show up here</strong>
             <p>
-              Registra tus primeros nodos completados
-              <br />y asigna la fecha en que te pagarán.
+              Log your first completed nodes
+              <br />
+              and set the date you’ll be paid.
             </p>
           </div>
         )}
@@ -186,8 +187,8 @@ export function BillingView() {
       <section className="panel production">
         <div className="panel-heading">
           <div>
-            <h2>Producción por día</h2>
-            <p>El valor del trabajo completado.</p>
+            <h2>Production by day</h2>
+            <p>The value of finished work.</p>
           </div>
         </div>
         {Object.keys(byDay).length ? (
@@ -196,45 +197,45 @@ export function BillingView() {
             .map(([day, group]) => (
               <div className="production-row" key={day}>
                 <div>
-                  <strong>{new Date(`${day}T12:00:00`).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}</strong>
+                  <strong>{new Date(`${day}T12:00:00`).toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" })}</strong>
                   <small>{group.map((node) => node.code).join(" · ")}</small>
                 </div>
                 <span>
-                  {group.length} nodos
+                  {group.length} nodes
                   <strong>{money(group.filter(billable).length * PAY_PER_NODE)}</strong>
                 </span>
               </div>
             ))
         ) : (
           <div className="empty">
-            <strong>Listo para tu primera jornada</strong>
+            <strong>Ready for the first day</strong>
           </div>
         )}
         <div className="rate">
-          <span>Tarifa por nodo</span>
+          <span>Rate per node</span>
           <strong>
             $350 <small>USD</small>
           </strong>
-          <p>Cada nodo completado e incluido en billing suma $350. Los reasignados y los marcados fuera de billing siguen en producción, sin cobro.</p>
+          <p>Each completed node included in billing adds $350. Reassigned nodes and nodes marked out of billing stay in production, without pay.</p>
         </div>
       </section>
       <section className="panel billing-table">
         <div className="panel-heading">
           <div>
-            <h2>Detalle de billing</h2>
-            <p>Trabajo, factura y pago en una misma vista.</p>
+            <h2>Billing detail</h2>
+            <p>Work, invoice, and pay in one view.</p>
           </div>
         </div>
         <div className="table-scroll">
           <table>
             <thead>
               <tr>
-                <th>NODO / FACTURA</th>
-                <th>COMPLETADO</th>
-                <th>FACTURACIÓN</th>
-                <th>PAGO PREVISTO</th>
-                <th>RECIBIDO</th>
-                <th>IMPORTE</th>
+                <th>NODE / INVOICE</th>
+                <th>COMPLETED</th>
+                <th>INVOICE</th>
+                <th>EXPECTED PAY</th>
+                <th>RECEIVED</th>
+                <th>AMOUNT</th>
               </tr>
             </thead>
             <tbody>
@@ -244,23 +245,23 @@ export function BillingView() {
                     <button className="node-link" onClick={() => splicer.setEditing({ ...node })}>
                       {node.code}
                     </button>
-                    <small className="sub">{node.invoice ? `Factura ${node.invoice}` : node.job || "Sin factura"}</small>
+                    <small className="sub">{node.invoice ? `Invoice ${node.invoice}` : node.job || "No invoice"}</small>
                   </td>
                   <td>{formatShort(node.completed)}</td>
                   <td>
                     <span className="pill completed">{STATUS_LABEL.completed}</span>
-                    <small className="sub">{node.invoiceStatus === "pending" ? "Factura pendiente" : node.invoiceStatus === "sent" ? "Factura enviada" : "Factura aprobada"}</small>
+                    <small className="sub">{node.invoiceStatus === "pending" ? "Invoice pending" : node.invoiceStatus === "sent" ? "Invoice sent" : "Invoice approved"}</small>
                   </td>
                   <td>{formatShort(node.payDate)}</td>
-                  <td>{node.paidDate ? formatShort(node.paidDate) : "Pendiente"}</td>
+                  <td>{node.paidDate ? formatShort(node.paidDate) : "Pending"}</td>
                   <td className="amount">$350</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {!detail.length ? <div className="empty">Aún no hay nodos con completado confirmado.</div> : null}
+          {!detail.length ? <div className="empty">No confirmed completions yet.</div> : null}
         </div>
-        <div className="table-foot">Los pagos se confirman manualmente.</div>
+        <div className="table-foot">Payments are confirmed manually.</div>
       </section>
     </div>
   );

@@ -1,16 +1,17 @@
 import type { Metadata, Viewport } from "next";
 import "./splicer.css";
+import "./theme.css";
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#f7f9f5",
+  themeColor: "#f3f5f8",
 };
 
 export const metadata: Metadata = {
   title: "Splicer · Optimum",
-  description: "Calendario de nodos, producción y billing",
+  description: "Node calendar, production, and billing",
   applicationName: "Splicer",
   appleWebApp: {
     capable: true,
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body>
         <script
           dangerouslySetInnerHTML={{

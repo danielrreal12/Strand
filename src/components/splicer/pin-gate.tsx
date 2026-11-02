@@ -14,7 +14,7 @@ export function PinGate({ onUnlock }: { onUnlock: () => void }) {
       onUnlock();
       return;
     }
-    setError("PIN incorrecto.");
+    setError("Wrong PIN.");
     setPin("");
   }
 
@@ -22,10 +22,10 @@ export function PinGate({ onUnlock }: { onUnlock: () => void }) {
     <div className="pin-screen">
       <main className="pin-card">
         <small>OPTIMUM · PAIGE</small>
-        <h1>Bienvenido a Splicer</h1>
-        <p>Ingresa tu PIN para abrir el calendario, producción y billing.</p>
+        <h1>Welcome to Splicer</h1>
+        <p>Enter your PIN to open the calendar, production, and billing.</p>
         <form onSubmit={submit}>
-          <label htmlFor="pin">PIN de acceso</label>
+          <label htmlFor="pin">Access PIN</label>
           <input
             id="pin"
             name="pin"
@@ -44,9 +44,9 @@ export function PinGate({ onUnlock }: { onUnlock: () => void }) {
           <p id="pin-error" className="error" role="alert">
             {error}
           </p>
-          <button className="primary">Entrar</button>
+          <button className="primary">Enter</button>
         </form>
-        <footer>Este dispositivo recordará el acceso durante 30 días.</footer>
+        <footer>This device will remember access for 30 days.</footer>
       </main>
     </div>
   );
