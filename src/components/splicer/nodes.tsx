@@ -92,6 +92,7 @@ export function NodesView() {
                   </td>
                   <td>
                     <span className={`pill ${node.status}`}>{STATUS_LABEL[node.status]}</span>
+                    {node.completedBy ? <small className="sub">{node.completedBy}</small> : null}
                     {flag.label ? <small className="sub deadline-label">{flag.label}</small> : null}
                     {node.night ? <small className="sub">☾ Night cut</small> : null}
                   </td>

@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { PIN, writeSession } from "@/lib/splicer";
+import { crewByPin, writeSession, type CrewName } from "@/lib/splicer";
 
-export function PinGate({ onUnlock }: { onUnlock: () => void }) {
+export function PinGate({ onUnlock }: { onUnlock: (person: CrewName) => void }) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (pin === PIN) {
-      writeSession();
-      onUnlock();
+    const member = crewByPin(pin);
+    if (member) {
+      writeSession(member.id);
+      onUnlock(member.id);
       return;
     }
     setError("Wrong PIN.");
@@ -23,9 +24,9 @@ export function PinGate({ onUnlock }: { onUnlock: () => void }) {
       <main className="pin-card">
         <small>OPTIMUM · PAIGE</small>
         <h1>Welcome to Splicer</h1>
-        <p>Enter your PIN to open the calendar, production, and billing.</p>
+        <p>Enter your access code to open the calendar, your route, and your billing.</p>
         <form onSubmit={submit}>
-          <label htmlFor="pin">Access PIN</label>
+          <label htmlFor="pin">Access code</label>
           <input
             id="pin"
             name="pin"

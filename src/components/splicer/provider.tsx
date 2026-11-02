@@ -19,6 +19,7 @@ import {
   writeRoutePlans,
   writeStoredNodes,
   type CalendarMode,
+  type CrewName,
   type RoutePlan,
   type SplicerNode,
   type TabId,
@@ -27,6 +28,7 @@ import {
 type BatchMode = "complete" | "schedule" | "payment" | "received";
 
 type SplicerState = {
+  person: CrewName;
   nodes: SplicerNode[];
   today: string;
   tab: TabId;
@@ -54,6 +56,8 @@ type SplicerState = {
   setBatchDate: (value: string) => void;
   batchPay: string;
   setBatchPay: (value: string) => void;
+  batchPerson: CrewName;
+  setBatchPerson: (person: CrewName) => void;
   openBatch: (options?: { mode?: BatchMode; codes?: string[] }) => void;
   closeBatch: () => void;
   saving: boolean;
@@ -80,7 +84,7 @@ export function useSplicer() {
   return value;
 }
 
-export function SplicerProvider({ children, onLock }: { children: ReactNode; onLock: () => void }) {
+export function SplicerProvider({ person, children, onLock }: { person: CrewName; children: ReactNode; onLock: () => void }) {
   const [nodes, setNodes] = useState<SplicerNode[]>(() => readStoredNodes());
   const [today, setToday] = useState(() => chicagoToday());
   const [tab, setTab] = useState<TabId>("calendar");
@@ -95,6 +99,7 @@ export function SplicerProvider({ children, onLock }: { children: ReactNode; onL
   const [batchMode, setBatchModeState] = useState<BatchMode>("complete");
   const [batchDate, setBatchDate] = useState(() => chicagoToday());
   const [batchPay, setBatchPay] = useState("");
+  const [batchPerson, setBatchPerson] = useState<CrewName>(person);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
@@ -169,10 +174,11 @@ export function SplicerProvider({ children, onLock }: { children: ReactNode; onL
       setBatchModeState(options?.mode ?? "complete");
       setBatchDate(today);
       setBatchPay("");
+      setBatchPerson(person);
       setError("");
       if (options?.codes) setSelectedCodes(options.codes);
     },
-    [today],
+    [person, today],
   );
 
   const setBatchMode = useCallback((mode: BatchMode) => {
@@ -206,6 +212,7 @@ export function SplicerProvider({ children, onLock }: { children: ReactNode; onL
   }, []);
 
   const value: SplicerState = {
+    person,
     nodes,
     today,
     tab,
@@ -233,6 +240,8 @@ export function SplicerProvider({ children, onLock }: { children: ReactNode; onL
     setBatchDate,
     batchPay,
     setBatchPay,
+    batchPerson,
+    setBatchPerson,
     openBatch,
     closeBatch: () => setBatchOpen(false),
     saving,

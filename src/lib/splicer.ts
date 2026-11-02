@@ -1,7 +1,7 @@
 import seedNodes from "@/data/nodes.json";
 
 export const PAY_PER_NODE = 350;
-export const PIN = "5796";
+export const STOPS_PER_DAY = 6;
 export const SESSION_KEY = "splicer-session";
 export const NODES_KEY = "splicer-nodes-v1";
 export const ROUTES_KEY = "splicer-routes-v1";
@@ -13,7 +13,23 @@ export type InvoiceStatus = "pending" | "sent" | "approved";
 export type ReviewStatus = "" | "review_data" | "check_reassignment";
 export type CalendarMode = "scheduled" | "start" | "due" | "completed" | "payment";
 export type TabId = "calendar" | "nodes" | "routes" | "billing";
-export type CrewName = "Daniel" | "Iván";
+export type CrewName = "Daniel" | "Iván" | "Chris";
+
+export const CREW: CrewName[] = ["Daniel", "Iván", "Chris"];
+
+export const CREW_MEMBERS: { id: CrewName; name: string; initials: string; pin: string; role: string }[] = [
+  { id: "Daniel", name: "Daniel Villarreal", initials: "DV", pin: "5796", role: "Administrator · Private" },
+  { id: "Iván", name: "Iván", initials: "IV", pin: "6841", role: "Splicer · Private" },
+  { id: "Chris", name: "Chris", initials: "CH", pin: "9135", role: "Splicer · Private" },
+];
+
+export function crewById(id: CrewName) {
+  return CREW_MEMBERS.find((member) => member.id === id) ?? CREW_MEMBERS[0];
+}
+
+export function crewByPin(pin: string) {
+  return CREW_MEMBERS.find((member) => member.pin === pin) ?? null;
+}
 
 export type SplicerNode = {
   code: string;
@@ -35,6 +51,7 @@ export type SplicerNode = {
   notes: string;
   reviewStatus: ReviewStatus | string;
   billingIncluded?: boolean;
+  completedBy?: CrewName | "";
 };
 
 export type BillingWeek = {
@@ -54,8 +71,7 @@ export type RoutePlan = {
   day: string;
   Daniel: string[];
   Iván: string[];
-  extra: CrewName;
-  nextExtra: CrewName;
+  Chris: string[];
   saved: boolean;
 };
 
@@ -71,14 +87,7 @@ export const REVIEW_LABEL: Record<string, string> = {
   check_reassignment: "Check reassignment",
 };
 
-export const PREPARED_ROUTE: RoutePlan = {
-  day: "2026-11-03",
-  Daniel: [],
-  Iván: ["B619A"],
-  extra: "Iván",
-  nextExtra: "Daniel",
-  saved: false,
-};
+export const ROUTE_FOCUS_DAY = "2026-11-03";
 
 const DAY = 86400000;
 
@@ -307,6 +316,10 @@ export function billable(node: SplicerNode) {
   return node.billingIncluded !== false;
 }
 
+export function mineNodes(nodes: SplicerNode[], person: CrewName) {
+  return nodes.filter((node) => node.completedBy === person);
+}
+
 export function seedNodesList(): SplicerNode[] {
   return seedNodes as SplicerNode[];
 }
@@ -329,18 +342,19 @@ export function writeStoredNodes(nodes: SplicerNode[]) {
   localStorage.setItem(NODES_KEY, JSON.stringify(nodes));
 }
 
-export function readSession() {
-  if (typeof window === "undefined") return false;
+export function readSession(): CrewName | null {
+  if (typeof window === "undefined") return null;
   try {
-    const raw = JSON.parse(localStorage.getItem(SESSION_KEY) || "null") as { ok?: boolean; exp?: number } | null;
-    return Boolean(raw?.ok && raw.exp && raw.exp > Date.now());
+    const raw = JSON.parse(localStorage.getItem(SESSION_KEY) || "null") as { person?: CrewName; exp?: number } | null;
+    if (!raw?.person || !raw.exp || raw.exp <= Date.now()) return null;
+    return CREW.includes(raw.person) ? raw.person : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
-export function writeSession() {
-  localStorage.setItem(SESSION_KEY, JSON.stringify({ ok: true, exp: Date.now() + SESSION_MS }));
+export function writeSession(person: CrewName) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ ok: true, person, exp: Date.now() + SESSION_MS }));
 }
 
 export function clearSession() {
@@ -366,6 +380,7 @@ export function csvFor(nodes: SplicerNode[]) {
     "Map PDF",
     "Follow-up",
     "Included in billing",
+    "Completed by",
   ];
   const rows = nodes.map((node) => {
     const period = node.status === "completed" && billable(node) && node.completed ? billingPeriod(node.completed) : null;
@@ -387,6 +402,7 @@ export function csvFor(nodes: SplicerNode[]) {
       node.map || "Map still coming",
       REVIEW_LABEL[node.reviewStatus] || "",
       node.billingIncluded === false ? "No" : "Yes",
+      node.completedBy || "",
     ];
   });
   return `\uFEFF${[header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n")}`;
@@ -396,11 +412,11 @@ function csvCell(value: string) {
   return `"${value.replaceAll('"', '""')}"`;
 }
 
-export function downloadCsv(nodes: SplicerNode[], today: string) {
+export function downloadCsv(nodes: SplicerNode[], today: string, who = "billing") {
   const blob = new Blob([csvFor(nodes)], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = `optimum-billing-${today}.csv`;
+  link.download = `optimum-${who.toLowerCase()}-${today}.csv`;
   link.click();
   URL.revokeObjectURL(link.href);
 }
@@ -452,13 +468,150 @@ export function orderByProximity(nodes: SplicerNode[], origin?: { lat: number; l
   return ordered;
 }
 
+function squaredDistance(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  return (a.lat - b.lat) ** 2 + (a.lng - b.lng) ** 2;
+}
+
+function centroid(codes: string[], byCode: Map<string, SplicerNode>) {
+  const points = codes.map((code) => parseGps(byCode.get(code)?.gps || "")).filter((point): point is { lat: number; lng: number } => Boolean(point));
+  if (!points.length) return null;
+  return {
+    lat: points.reduce((sum, point) => sum + point.lat, 0) / points.length,
+    lng: points.reduce((sum, point) => sum + point.lng, 0) / points.length,
+  };
+}
+
+function farthestNodes(nodes: SplicerNode[], count: number) {
+  const located = nodes.filter((node) => parseGps(node.gps));
+  if (!count || !located.length) return [];
+  const chosen: SplicerNode[] = [
+    located.reduce((west, node) => (parseGps(node.gps)!.lng < parseGps(west.gps)!.lng ? node : west)),
+  ];
+  while (chosen.length < Math.min(count, located.length)) {
+    let best = located[0];
+    let bestDistance = -1;
+    for (const node of located) {
+      if (chosen.some((pick) => pick.code === node.code)) continue;
+      const point = parseGps(node.gps)!;
+      const distance = Math.min(...chosen.map((pick) => squaredDistance(point, parseGps(pick.gps)!)));
+      if (distance > bestDistance) {
+        bestDistance = distance;
+        best = node;
+      }
+    }
+    if (chosen.some((pick) => pick.code === best.code)) break;
+    chosen.push(best);
+  }
+  return chosen;
+}
+
+export function normalizePlan(plan: Partial<RoutePlan> & { day: string }): RoutePlan {
+  const seen = new Set<string>();
+  const take = (codes: string[] | undefined) =>
+    (codes ?? []).filter((code) => {
+      const clean = code.trim().toUpperCase();
+      if (!clean || seen.has(clean)) return false;
+      seen.add(clean);
+      return true;
+    });
+  return {
+    day: plan.day,
+    Daniel: take(plan.Daniel),
+    Iván: take(plan.Iván),
+    Chris: take(plan.Chris),
+    saved: Boolean(plan.saved),
+  };
+}
+
+export function buildDayRoute(day: string, nodes: SplicerNode[], previous: RoutePlan | null): RoutePlan {
+  const open = nodes.filter((node) => node.status !== "completed" && node.status !== "excluded");
+  const byCode = new Map(open.map((node) => [node.code, node]));
+  const lists: Record<CrewName, string[]> = { Daniel: [], Iván: [], Chris: [] };
+  if (previous) {
+    const carried = normalizePlan(previous);
+    for (const person of CREW) {
+      lists[person] = carried[person].filter((code) => byCode.has(code)).slice(0, STOPS_PER_DAY);
+    }
+  }
+  const taken = new Set(CREW.flatMap((person) => lists[person]));
+  let pool = open.filter((node) => !taken.has(node.code));
+  const seeds = farthestNodes(
+    pool,
+    CREW.filter((person) => lists[person].length === 0).length,
+  );
+  CREW.filter((person) => lists[person].length === 0).forEach((person, index) => {
+    const seed = seeds[index];
+    if (!seed) return;
+    lists[person].push(seed.code);
+    pool = pool.filter((node) => node.code !== seed.code);
+  });
+
+  let guard = 0;
+  while (pool.length && CREW.some((person) => lists[person].length < STOPS_PER_DAY) && guard < 400) {
+    guard += 1;
+    const picks: { person: CrewName; index: number; distance: number }[] = [];
+    for (const person of CREW) {
+      if (lists[person].length >= STOPS_PER_DAY) continue;
+      const anchor = centroid(lists[person], byCode);
+      let bestIndex = -1;
+      let bestDistance = Number.POSITIVE_INFINITY;
+      pool.forEach((node, index) => {
+        const point = parseGps(node.gps);
+        const distance = point && anchor ? squaredDistance(point, anchor) : point ? 1_000_000 : 1_000_000_000;
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestIndex = index;
+        }
+      });
+      if (bestIndex >= 0) picks.push({ person, index: bestIndex, distance: bestDistance });
+    }
+    if (!picks.length) break;
+    picks.sort((a, b) => a.distance - b.distance);
+    const claimed = new Set<number>();
+    for (const pick of picks) {
+      if (claimed.has(pick.index)) continue;
+      claimed.add(pick.index);
+      lists[pick.person].push(pool[pick.index].code);
+    }
+    pool = pool.filter((_, index) => !claimed.has(index));
+  }
+
+  for (const person of CREW) {
+    const previousCodes = new Set(previous?.[person] ?? []);
+    let prefix = 0;
+    for (const code of lists[person]) {
+      if (!previousCodes.has(code)) break;
+      prefix += 1;
+    }
+    const head = lists[person].slice(0, prefix);
+    const tail = lists[person].slice(prefix);
+    const ordered = orderByProximity(
+      tail.map((code) => byCode.get(code)).filter((node): node is SplicerNode => Boolean(node)),
+      centroid(head, byCode),
+    ).map((node) => node.code);
+    const unlocated = tail.filter((code) => !ordered.includes(code));
+    lists[person] = [...head, ...ordered, ...unlocated].slice(0, STOPS_PER_DAY);
+  }
+
+  return normalizePlan({ day, ...lists, saved: false });
+}
+
+export function routeForDay(day: string, nodes: SplicerNode[], plans: Record<string, RoutePlan>, depth = 0): RoutePlan {
+  const stored = plans[day] ? normalizePlan({ ...plans[day], day }) : null;
+  if (stored?.saved) return stored;
+  if (depth >= 21) return buildDayRoute(day, nodes, null);
+  const previous = routeForDay(addDays(day, -1), nodes, plans, depth + 1);
+  return buildDayRoute(day, nodes, previous);
+}
+
 export function readRoutePlans(): Record<string, RoutePlan> {
-  if (typeof window === "undefined") return { [PREPARED_ROUTE.day]: PREPARED_ROUTE };
+  if (typeof window === "undefined") return {};
   try {
-    const raw = JSON.parse(localStorage.getItem(ROUTES_KEY) || "null") as Record<string, RoutePlan> | null;
-    return { [PREPARED_ROUTE.day]: PREPARED_ROUTE, ...raw };
+    const raw = JSON.parse(localStorage.getItem(ROUTES_KEY) || "null") as Record<string, Partial<RoutePlan>> | null;
+    if (!raw) return {};
+    return Object.fromEntries(Object.entries(raw).map(([day, plan]) => [day, normalizePlan({ ...plan, day })]));
   } catch {
-    return { [PREPARED_ROUTE.day]: PREPARED_ROUTE };
+    return {};
   }
 }
 

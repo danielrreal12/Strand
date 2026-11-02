@@ -7,14 +7,18 @@ import {
   STATUS_LABEL,
   billable,
   billingWeeks,
+  crewById,
   formatShort,
+  mineNodes,
   money,
 } from "@/lib/splicer";
 
 export function BillingView() {
   const splicer = useSplicer();
-  const weeks = billingWeeks(splicer.nodes, splicer.today);
-  const completed = splicer.nodes.filter((node) => node.status === "completed");
+  const profile = crewById(splicer.person);
+  const own = mineNodes(splicer.nodes, splicer.person);
+  const weeks = billingWeeks(own, splicer.today);
+  const completed = own.filter((node) => node.status === "completed");
   const receivable = completed.filter((node) => billable(node) && !node.paidDate);
   const byPay = receivable.reduce<Record<string, typeof receivable>>((groups, node) => {
     const key = node.payDate || "No date";
@@ -35,11 +39,11 @@ export function BillingView() {
       <section className="panel weekly-billing">
         <div className="panel-heading">
           <div>
-            <h2>Billing by week</h2>
-            <p>$350 USD / node</p>
+            <h2>Your billing by week</h2>
+            <p>{profile.name} · $350 USD / node</p>
           </div>
         </div>
-        <p className="production-rule">Reassigned nodes and nodes marked out of billing stay out of payable production. Pay counts only after you record it.</p>
+        <p className="production-rule">This tab is only {profile.name}'s pay. Set Completed by on the node sheet when the work is logged. Jobs with no name stay off every personal bill. Reassigned nodes and nodes marked out of billing stay out of payable production.</p>
         <div className="table-scroll">
           <table>
             <thead>
@@ -136,7 +140,7 @@ export function BillingView() {
       <section className="panel">
         <div className="panel-heading">
           <div>
-            <h2>Upcoming payments</h2>
+            <h2>Your upcoming payments</h2>
             <p>What you’ll receive, grouped by date.</p>
           </div>
           <button className="text-button" onClick={() => splicer.openBatch({ mode: "payment", codes: receivable.map((node) => node.code) })}>
@@ -175,9 +179,9 @@ export function BillingView() {
         ) : (
           <div className="empty">
             <Wallet size={30} />
-            <strong>Upcoming payments will show up here</strong>
+            <strong>Your payments will show up here</strong>
             <p>
-              Log your first completed nodes
+              Log a completed node in your name
               <br />
               and set the date you’ll be paid.
             </p>
@@ -187,8 +191,8 @@ export function BillingView() {
       <section className="panel production">
         <div className="panel-heading">
           <div>
-            <h2>Production by day</h2>
-            <p>The value of finished work.</p>
+            <h2>Your production by day</h2>
+            <p>The value of work finished in your name.</p>
           </div>
         </div>
         {Object.keys(byDay).length ? (
@@ -222,8 +226,8 @@ export function BillingView() {
       <section className="panel billing-table">
         <div className="panel-heading">
           <div>
-            <h2>Billing detail</h2>
-            <p>Work, invoice, and pay in one view.</p>
+            <h2>Your billing detail</h2>
+            <p>Your work, invoice, and pay. Other people's totals stay hidden.</p>
           </div>
         </div>
         <div className="table-scroll">
@@ -259,7 +263,7 @@ export function BillingView() {
               ))}
             </tbody>
           </table>
-          {!detail.length ? <div className="empty">No confirmed completions yet.</div> : null}
+          {!detail.length ? <div className="empty">No confirmed completions in your name yet.</div> : null}
         </div>
         <div className="table-foot">Payments are confirmed manually.</div>
       </section>

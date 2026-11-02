@@ -3,14 +3,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSplicer } from "./provider";
 import {
-  PREPARED_ROUTE,
+  CREW,
+  ROUTE_FOCUS_DAY,
+  STOPS_PER_DAY,
   agendaDate,
   directionLegs,
   googleDirections,
   googleSearch,
   orderByProximity,
   parseGps,
-  type CrewName,
+  routeForDay,
   type RoutePlan,
   type SplicerNode,
 } from "@/lib/splicer";
@@ -64,22 +66,15 @@ function nodesFor(codes: string[], nodes: SplicerNode[]) {
 
 export function RoutesView() {
   const splicer = useSplicer();
-  const initialDay = splicer.today <= PREPARED_ROUTE.day ? PREPARED_ROUTE.day : splicer.selectedDay < splicer.anchor ? splicer.anchor : splicer.selectedDay;
+  const initialDay = splicer.today <= ROUTE_FOCUS_DAY ? ROUTE_FOCUS_DAY : splicer.selectedDay < splicer.anchor ? splicer.anchor : splicer.selectedDay;
   const [day, setDay] = useState(initialDay);
-  const plan = splicer.routePlans[day] ?? {
-    day,
-    Daniel: [],
-    Iván: [],
-    extra: day === PREPARED_ROUTE.day ? PREPARED_ROUTE.extra : ("Iván" as CrewName),
-    nextExtra: day === PREPARED_ROUTE.day ? PREPARED_ROUTE.nextExtra : ("Daniel" as CrewName),
-    saved: false,
-  };
+  const plan = routeForDay(day, splicer.nodes, splicer.routePlans);
 
   return (
     <>
       <div className="team-mode">
         <button className={splicer.routeMode === "team" ? "primary" : "text-button"} onClick={() => splicer.setRouteMode("team")}>
-          Daniel and Iván
+          Daniel, Iván, and Chris
         </button>
         <button className={splicer.routeMode === "individual" ? "primary" : "text-button"} onClick={() => splicer.setRouteMode("individual")}>
           Individual route / All nodes
@@ -100,15 +95,18 @@ function TeamRoute({ day, setDay, plan }: { day: string; setDay: (day: string) =
   const [editing, setEditing] = useState(false);
   const [danielText, setDanielText] = useState(plan.Daniel.join(", "));
   const [ivanText, setIvanText] = useState(plan.Iván.join(", "));
+  const [chrisText, setChrisText] = useState(plan.Chris.join(", "));
   const [mapError, setMapError] = useState("");
   const daniel = nodesFor(plan.Daniel, splicer.nodes).filter((node) => node.status !== "completed");
   const ivan = nodesFor(plan.Iván, splicer.nodes).filter((node) => node.status !== "completed");
-  const routeKey = `${daniel.map((node) => `${node.code}:${node.gps}`).join("|")}#${ivan.map((node) => `${node.code}:${node.gps}`).join("|")}`;
+  const chris = nodesFor(plan.Chris, splicer.nodes).filter((node) => node.status !== "completed");
+  const routeKey = [daniel, ivan, chris].map((crew) => crew.map((node) => `${node.code}:${node.gps}`).join("|")).join("#");
 
   useEffect(() => {
     setDanielText(plan.Daniel.join(", "));
     setIvanText(plan.Iván.join(", "));
-  }, [plan.Daniel, plan.Iván, day]);
+    setChrisText(plan.Chris.join(", "));
+  }, [plan.Daniel, plan.Iván, plan.Chris, day]);
 
   useEffect(() => {
     const element = mapRef.current;
@@ -151,6 +149,7 @@ function TeamRoute({ day, setDay, plan }: { day: string; setDay: (day: string) =
         };
         paint(daniel, "D", "#2563eb", "crew-daniel");
         paint(ivan, "I", "#c2410c", "crew-ivan");
+        paint(chris, "C", "#0f766e", "crew-chris");
         if (bounds.length > 1) created.fitBounds(bounds, { padding: [28, 28] });
         else if (bounds.length === 1) created.setView(bounds[0], 13);
       })
@@ -174,7 +173,8 @@ function TeamRoute({ day, setDay, plan }: { day: string; setDay: (day: string) =
   function saveManual() {
     const nextDaniel = parseList(danielText);
     const ivan = parseList(ivanText).filter((code) => !nextDaniel.includes(code));
-    splicer.saveRoute({ ...plan, day, Daniel: nextDaniel, Iván: ivan, saved: true });
+    const chris = parseList(chrisText).filter((code) => !nextDaniel.includes(code) && !ivan.includes(code));
+    splicer.saveRoute({ ...plan, day, Daniel: nextDaniel, Iván: ivan, Chris: chris, saved: true });
     setEditing(false);
   }
 
@@ -182,8 +182,8 @@ function TeamRoute({ day, setDay, plan }: { day: string; setDay: (day: string) =
     <>
       <div className="panel route-toolbar">
         <div>
-          <h2>Daniel and Iván · Today’s routes</h2>
-          <p>Daily split at 8 p.m. for the next shift · Houston time</p>
+          <h2>Daniel, Iván, and Chris · Today’s routes</h2>
+          <p>{STOPS_PER_DAY} stops each · unfinished stops stay first the next day · Houston time</p>
         </div>
         <label>
           Work date
@@ -192,7 +192,7 @@ function TeamRoute({ day, setDay, plan }: { day: string; setDay: (day: string) =
         <label>
           Show
           <select defaultValue="both" aria-label="Show">
-            <option value="both">Both routes</option>
+            <option value="both">All three routes</option>
           </select>
         </label>
       </div>
@@ -202,21 +202,31 @@ function TeamRoute({ day, setDay, plan }: { day: string; setDay: (day: string) =
         </p>
       ) : null}
       <div className="panel route-map-panel team-map">
-        <div ref={mapRef} className="route-map" role="region" aria-label="Map of Daniel and Iván’s routes" />
+        <div ref={mapRef} className="route-map" role="region" aria-label="Map of Daniel, Iván, and Chris’s routes" />
         <div className="route-legend">
           <strong className="daniel-label">● Daniel · Blue</strong>
           <strong className="ivan-label">● Iván · Orange</strong>
+          <strong className="chris-label">● Chris · Teal</strong>
         </div>
-        <p className="route-help">Grouped by how close the coordinates are. Dotted lines are the stop order; Google Maps handles streets and traffic. D and I mark each person.</p>
+        <p className="route-help">Each route stays near itself. Unfinished stops from the day before stay at the front, then the nearest open nodes fill the list back to {STOPS_PER_DAY}. Dotted lines are the stop order. D, I, and C mark each person.</p>
       </div>
       <div className="panel team-status">
         <strong>{plan.saved ? "Saved on this device" : "Preview · Not saved yet"}</strong>
         <p>
-          {plan.extra ? `Extra node this split: ${plan.extra}.` : "This split has no extra node."} Next extra: {plan.nextExtra}.
+          {CREW.map((person) => `${person} ${plan[person].length}/${STOPS_PER_DAY}`).join(" · ")}. Open nodes still waiting: {splicer.nodes.filter((node) => node.status !== "completed" && node.status !== "excluded").length}.
         </p>
-        {!plan.saved ? (
-          <button className="primary" onClick={() => splicer.saveRoute({ ...plan, day, saved: true })}>
-            Save this day’s split
+        <button className="primary" onClick={() => splicer.saveRoute({ ...plan, day, saved: true })}>
+          Save this day’s split
+        </button>
+        {plan.saved ? (
+          <button
+            className="text-button"
+            onClick={() => {
+              const rebuilt = routeForDay(day, splicer.nodes, { ...splicer.routePlans, [day]: { ...plan, saved: false } });
+              splicer.saveRoute({ ...rebuilt, day, saved: true });
+            }}
+          >
+            Rebuild from the nearest nodes
           </button>
         ) : null}
         <button className="text-button" onClick={() => setEditing((current) => !current)}>
@@ -230,8 +240,12 @@ function TeamRoute({ day, setDay, plan }: { day: string; setDay: (day: string) =
               <textarea rows={3} value={danielText} onChange={(event) => setDanielText(event.target.value)} />
             </label>
             <label>
-              Your route · Iván
+              Iván
               <textarea rows={3} value={ivanText} onChange={(event) => setIvanText(event.target.value)} />
+            </label>
+            <label>
+              Chris
+              <textarea rows={3} value={chrisText} onChange={(event) => setChrisText(event.target.value)} />
             </label>
             <button className="primary" onClick={saveManual}>
               Save this day’s split
@@ -241,9 +255,10 @@ function TeamRoute({ day, setDay, plan }: { day: string; setDay: (day: string) =
       </div>
       <div className="team-cards">
         <CrewCard title="Daniel" className="crew-card-daniel" nodes={daniel} />
-        <CrewCard title="Your route · Iván" className="crew-card-ivan" nodes={ivan} />
+        <CrewCard title="Iván" className="crew-card-ivan" nodes={ivan} />
+        <CrewCard title="Chris" className="crew-card-chris" nodes={chris} />
       </div>
-      <p className="route-help">Completed nodes hide from the active route without changing the saved assignment. The Nov 3 split leaves B619A with Iván: it is the only pending node, and its authorized start is Oct 27.</p>
+      <p className="route-help">Completed stops drop off the active route and that person’s next day fills back to {STOPS_PER_DAY} from the nearest open nodes. With only one open node, the other two routes stay empty until more work is assigned.</p>
     </>
   );
 }

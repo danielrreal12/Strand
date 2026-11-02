@@ -23,7 +23,9 @@ import {
   PAY_PER_NODE,
   activeNodes,
   billable,
+  crewById,
   downloadCsv,
+  mineNodes,
   money,
   type TabId,
 } from "@/lib/splicer";
@@ -46,18 +48,19 @@ const TABS: { id: TabId; label: string }[] = [
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const splicer = useSplicer();
+  const profile = crewById(splicer.person);
   const active = activeNodes(splicer.nodes);
   const completed = active.filter((node) => node.status === "completed");
-  const generated = completed.filter(billable);
-  const receivable = generated.filter((node) => !node.paidDate);
-  const paid = generated.filter((node) => node.paidDate);
+  const mine = mineNodes(completed, splicer.person).filter(billable);
+  const receivable = mine.filter((node) => !node.paidDate);
+  const paid = mine.filter((node) => node.paidDate);
   const open = active.filter((node) => node.status !== "completed");
   const progress = active.length ? (completed.length / active.length) * 100 : 0;
   const titles: Record<TabId, [string, string]> = {
     calendar: ["Your work, on the calendar.", "Plan the week. Log progress. See what's next."],
-    routes: ["The day, stop by stop.", "See the nodes and build the route."],
-    nodes: ["Every node, in one place.", "Maps, locations, and the status of each assignment."],
-    billing: ["The work turns into pay.", "See what you produced and when it gets paid."],
+    routes: ["The day, stop by stop.", "Six stops each, grouped by how close the nodes are."],
+    nodes: ["Every node, in one place.", "Maps, locations, and who finished each assignment."],
+    billing: [`Your billing, ${profile.name}.`, "Only jobs with your name on them. Other people's pay stays off this tab."],
   };
   const [title, subtitle] = titles[splicer.tab];
 
@@ -109,10 +112,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <div className="profile">
-          <div>DV</div>
+          <div>{profile.initials}</div>
           <span>
-            <strong>Daniel Villarreal</strong>
-            <small>Administrator · Private</small>
+            <strong>{profile.name}</strong>
+            <small>{profile.role}</small>
           </span>
         </div>
       </aside>
@@ -173,36 +176,36 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </div>
             <div className="stat">
               <span>
-                Generated
+                Your generated
                 <ArrowUpRight size={18} />
               </span>
               <strong>
-                {money(generated.length * PAY_PER_NODE)}
+                {money(mine.length * PAY_PER_NODE)}
                 <em>USD</em>
               </strong>
-              <small>{generated.length} nodes × $350 per node</small>
+              <small>{mine.length} of your nodes × $350</small>
             </div>
             <div className="stat">
               <span>
-                To collect
+                Your to collect
                 <Clock size={18} />
               </span>
               <strong>
                 {money(receivable.length * PAY_PER_NODE)}
                 <em>USD</em>
               </strong>
-              <small>{receivable.filter((node) => !node.payDate).length} nodes with no pay date</small>
+              <small>{receivable.filter((node) => !node.payDate).length} of yours with no pay date</small>
             </div>
             <div className="stat green">
               <span>
-                Payment received
+                Your payment received
                 <Wallet size={18} />
               </span>
               <strong>
                 {money(paid.length * PAY_PER_NODE)}
                 <em>USD</em>
               </strong>
-              <small>{paid.length} nodes paid and confirmed</small>
+              <small>{paid.length} of yours paid and confirmed</small>
             </div>
           </div>
           {splicer.tab === "calendar" ? <WeekCharts /> : null}
@@ -214,8 +217,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 </button>
               ))}
             </div>
-            <button className="text-button" onClick={() => downloadCsv(splicer.nodes, splicer.today)}>
-              <Download size={16} /> Export CSV
+            <button className="text-button" onClick={() => downloadCsv(mineNodes(splicer.nodes, splicer.person), splicer.today, splicer.person)}>
+              <Download size={16} /> Export my CSV
             </button>
           </div>
           {children}

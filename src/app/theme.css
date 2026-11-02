@@ -367,6 +367,32 @@ input[type="checkbox"] {
   color: #1a120c;
 }
 
+.team-cards {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.route-marker.crew-chris {
+  background: #0f766e;
+}
+
+.crew-card-chris {
+  border-top: 4px solid #0f766e;
+}
+
+.chris-label {
+  color: #0f766e;
+}
+
+html[data-theme="dark"] .chris-label {
+  color: #7dcec4;
+}
+
+@media (max-width: 1100px) {
+  .team-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 650px) {
   aside {
     background: #f8f9fcf5;

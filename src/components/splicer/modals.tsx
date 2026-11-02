@@ -5,6 +5,7 @@ import { ExternalLink, FileText, MapPin, X } from "lucide-react";
 import { NodeNotices } from "./notices";
 import { useSplicer } from "./provider";
 import {
+  CREW_MEMBERS,
   PAY_PER_NODE,
   REVIEW_LABEL,
   STATUS_LABEL,
@@ -13,6 +14,7 @@ import {
   formatShort,
   googleSearch,
   money,
+  type CrewName,
   type InvoiceStatus,
   type NodeStatus,
   type SplicerNode,
@@ -63,6 +65,7 @@ function NodeModal({ node }: { node: SplicerNode }) {
       address: node.address,
       reviewStatus: node.reviewStatus,
       billingIncluded: node.billingIncluded,
+      completedBy: node.completedBy || "",
     });
   }
 
@@ -134,7 +137,7 @@ function NodeModal({ node }: { node: SplicerNode }) {
                   setNode({
                     ...node,
                     status,
-                    ...(status === "completed" ? {} : { completed: "", payDate: "", paidDate: "" }),
+                    ...(status === "completed" ? { completedBy: node.completedBy || splicer.person } : { completed: "", payDate: "", paidDate: "", completedBy: "" }),
                   });
                 }}
               >
@@ -148,6 +151,21 @@ function NodeModal({ node }: { node: SplicerNode }) {
             <label>
               Scheduled date
               <input type="date" min={node.start || undefined} value={node.scheduled} onChange={(event) => setNode({ ...node, scheduled: event.target.value })} />
+            </label>
+            <label>
+              Completed by
+              <select
+                value={node.completedBy || ""}
+                onChange={(event) => setNode({ ...node, completedBy: event.target.value as CrewName | "" })}
+              >
+                <option value="">Not recorded</option>
+                {CREW_MEMBERS.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.name}
+                  </option>
+                ))}
+              </select>
+              <small>This name is who gets the $350. Each access code only opens that person's billing.</small>
             </label>
             <label>
               Completion date
@@ -235,6 +253,7 @@ function BatchModal() {
       splicer.saveChanges(splicer.selectedCodes, {
         status: "completed",
         completed: splicer.batchDate,
+        completedBy: splicer.batchPerson,
         ...(splicer.batchPay ? { payDate: splicer.batchPay } : {}),
       });
       return;
@@ -278,10 +297,22 @@ function BatchModal() {
               <input type="date" required value={splicer.batchDate} onChange={(event) => splicer.setBatchDate(event.target.value)} />
             </label>
             {splicer.batchMode === "complete" ? (
-              <label>
-                Expected pay (optional)
-                <input type="date" min={splicer.batchDate} value={splicer.batchPay} onChange={(event) => splicer.setBatchPay(event.target.value)} />
-              </label>
+              <>
+                <label>
+                  Completed by
+                  <select value={splicer.batchPerson} onChange={(event) => splicer.setBatchPerson(event.target.value as CrewName)}>
+                    {CREW_MEMBERS.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Expected pay (optional)
+                  <input type="date" min={splicer.batchDate} value={splicer.batchPay} onChange={(event) => splicer.setBatchPay(event.target.value)} />
+                </label>
+              </>
             ) : null}
           </div>
           <p className="production-rule">Select only the nodes on your production report.</p>

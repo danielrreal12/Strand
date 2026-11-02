@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { readSession } from "@/lib/splicer";
+import { readSession, type CrewName } from "@/lib/splicer";
 import { BillingView } from "./billing";
 import { CalendarView } from "./calendar";
 import { Modals } from "./modals";
@@ -13,18 +13,18 @@ import { Shell } from "./shell";
 
 export function SplicerApp() {
   const [ready, setReady] = useState(false);
-  const [authed, setAuthed] = useState(false);
+  const [person, setPerson] = useState<CrewName | null>(null);
 
   useEffect(() => {
-    setAuthed(readSession());
+    setPerson(readSession());
     setReady(true);
   }, []);
 
   if (!ready) return <div className="loading">Loading your operation…</div>;
-  if (!authed) return <PinGate onUnlock={() => setAuthed(true)} />;
+  if (!person) return <PinGate onUnlock={setPerson} />;
 
   return (
-    <SplicerProvider onLock={() => setAuthed(false)}>
+    <SplicerProvider person={person} onLock={() => setPerson(null)}>
       <Board />
     </SplicerProvider>
   );
