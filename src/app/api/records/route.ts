@@ -31,6 +31,12 @@ export async function PUT(request: Request) {
   const incoming = sanitizeStore(parsed);
   if (!incoming) return Response.json({ error: "The records aren’t valid." }, { status: 400 });
   const current = await readStore();
+  const baseUpdatedAt = parsed && typeof parsed === "object" && typeof (parsed as { baseUpdatedAt?: unknown }).baseUpdatedAt === "string"
+    ? (parsed as { baseUpdatedAt: string }).baseUpdatedAt
+    : null;
+  if (current && baseUpdatedAt !== current.updatedAt) {
+    return Response.json({ ...visible(current, session.role, session.id), error: "The records changed. Reloading." }, { status: 409 });
+  }
   const next = applyRecordWrite(current, incoming, session.role, session.id);
   const saved = await writeStore(next);
   return Response.json(visible(saved, session.role, session.id));
