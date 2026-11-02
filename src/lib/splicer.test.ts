@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { billingPeriod, billingWeeks, buildDayRoute, crewByPin, mineNodes, routeForDay, seedNodesList, type SplicerNode } from "./splicer.ts";
+import { billingPeriod, billingWeeks, buildDayRoute, crewByPin, mineNodes, personalTotal, routeForDay, seedNodesList, type SplicerNode } from "./splicer.ts";
 
 function sample(code: string, lat: number, lng: number, status: SplicerNode["status"] = "pending"): SplicerNode {
   return {
@@ -39,18 +39,27 @@ test("billing periods match the Optimum cuts", () => {
 
 test("live board totals stay at 94 completed and $30,800 generated", () => {
   const nodes = seedNodesList();
-  assert.equal(nodes.length, 97);
+  assert.equal(nodes.length, 99);
   const active = nodes.filter((node) => node.status !== "excluded");
   const completed = active.filter((node) => node.status === "completed");
   const generated = completed.filter((node) => node.billingIncluded !== false);
-  assert.equal(active.length, 95);
-  assert.equal(completed.length, 94);
+  assert.equal(active.length, 97);
+  assert.equal(completed.length, 96);
   assert.equal(generated.length * 350, 30800);
   const weeks = billingWeeks(nodes, "2026-11-02");
   const earned = weeks.reduce((sum, week) => sum + week.earned, 0);
   assert.equal(earned, 30800);
   assert.equal(nodes.find((node) => node.code === "B619A")?.status, "pending");
-  assert.equal(mineNodes(nodes, "Daniel").length, 0);
+  assert.equal(mineNodes(nodes, "Daniel").length, 17);
+  assert.equal(mineNodes(nodes, "Iván").length, 15);
+  assert.equal(mineNodes(nodes, "Chris").length, 8);
+  assert.equal(nodes.find((node) => node.code === "B214A")?.completed, "2026-10-27");
+  assert.equal(nodes.find((node) => node.code === "B214A")?.completedBy, "Daniel");
+  assert.equal(nodes.find((node) => node.code === "B165A")?.completedBy, "Chris");
+  assert.equal(nodes.find((node) => node.code === "B210A")?.completed, "2026-10-30");
+  assert.equal(personalTotal(nodes, "Daniel"), 5600);
+  assert.equal(personalTotal(nodes, "Iván"), 5600);
+  assert.equal(personalTotal(nodes, "Chris"), 2400);
   assert.equal(crewByPin("5796")?.id, "Daniel");
   assert.equal(crewByPin("0000"), null);
 });

@@ -1,9 +1,10 @@
 import seedNodes from "@/data/nodes.json";
 
 export const PAY_PER_NODE = 350;
+export const CHRIS_RATE = 300;
+export const NODES_KEY = "splicer-nodes-v2";
 export const STOPS_PER_DAY = 6;
 export const SESSION_KEY = "splicer-session";
-export const NODES_KEY = "splicer-nodes-v1";
 export const ROUTES_KEY = "splicer-routes-v1";
 export const THEME_KEY = "splicer-theme";
 export const SESSION_MS = 30 * 24 * 60 * 60 * 1000;
@@ -176,7 +177,7 @@ export function billingPeriod(iso: string) {
   };
 }
 
-export function billingWeeks(nodes: SplicerNode[], today: string): BillingWeek[] {
+export function billingWeeks(nodes: SplicerNode[], today: string, viewer?: CrewName): BillingWeek[] {
   const weeks = new Map<string, Omit<BillingWeek, "count" | "earned" | "received" | "receivable">>();
   const ensure = (iso: string) => {
     const period = billingPeriod(iso);
@@ -190,9 +191,12 @@ export function billingWeeks(nodes: SplicerNode[], today: string): BillingWeek[]
     ensure(cursor.toISOString().slice(0, 10));
   }
   for (const node of nodes) {
-    if (node.status === "completed" && node.completed && node.billingIncluded !== false) {
-      ensure(node.completed).nodes.push(node);
+    if (node.status !== "completed" || !node.completed) continue;
+    if (viewer) {
+      if (shareAmount(node, viewer) > 0) ensure(node.completed).nodes.push(node);
+      continue;
     }
+    if (node.billingIncluded !== false) ensure(node.completed).nodes.push(node);
   }
   return [...weeks.values()]
     .sort((a, b) => a.start.localeCompare(b.start))
@@ -200,14 +204,17 @@ export function billingWeeks(nodes: SplicerNode[], today: string): BillingWeek[]
       const ordered = [...week.nodes].sort(
         (a, b) => a.completed.localeCompare(b.completed) || a.code.localeCompare(b.code),
       );
-      const received = ordered.filter((node) => node.paidDate).length * PAY_PER_NODE;
+      const earned = viewer ? ordered.reduce((sum, node) => sum + shareAmount(node, viewer), 0) : ordered.length * PAY_PER_NODE;
+      const received = viewer
+        ? ordered.filter((node) => node.paidDate).reduce((sum, node) => sum + shareAmount(node, viewer), 0)
+        : ordered.filter((node) => node.paidDate).length * PAY_PER_NODE;
       return {
         ...week,
         nodes: ordered,
         count: ordered.length,
-        earned: ordered.length * PAY_PER_NODE,
+        earned,
         received,
-        receivable: ordered.length * PAY_PER_NODE - received,
+        receivable: earned - received,
       };
     });
 }
@@ -320,6 +327,25 @@ export function mineNodes(nodes: SplicerNode[], person: CrewName) {
   return nodes.filter((node) => node.completedBy === person);
 }
 
+export function shareAmount(node: SplicerNode, person: CrewName) {
+  if (node.status !== "completed" || !node.completedBy) return 0;
+  if (node.completedBy === "Chris") return person === "Chris" ? CHRIS_RATE : 0;
+  if (node.completedBy === "Daniel" || node.completedBy === "Iván") return person === "Chris" ? 0 : PAY_PER_NODE / 2;
+  return 0;
+}
+
+export function payableNodes(nodes: SplicerNode[], person: CrewName) {
+  return nodes.filter((node) => shareAmount(node, person) > 0);
+}
+
+export function personalTotal(nodes: SplicerNode[], person: CrewName, paid?: boolean) {
+  return nodes.reduce((sum, node) => {
+    if (paid === true && !node.paidDate) return sum;
+    if (paid === false && node.paidDate) return sum;
+    return sum + shareAmount(node, person);
+  }, 0);
+}
+
 export function seedNodesList(): SplicerNode[] {
   return seedNodes as SplicerNode[];
 }
@@ -361,7 +387,7 @@ export function clearSession() {
   localStorage.removeItem(SESSION_KEY);
 }
 
-export function csvFor(nodes: SplicerNode[]) {
+export function csvFor(nodes: SplicerNode[], viewer?: CrewName) {
   const header = [
     "Node",
     "Status",
@@ -393,7 +419,7 @@ export function csvFor(nodes: SplicerNode[]) {
       node.completed,
       node.payDate,
       node.paidDate,
-      node.status === "completed" && billable(node) ? "350" : "0",
+      viewer && shareAmount(node, viewer) ? String(shareAmount(node, viewer)) : node.status === "completed" && billable(node) ? "350" : "0",
       node.invoice,
       node.job,
       node.gps,
@@ -413,7 +439,7 @@ function csvCell(value: string) {
 }
 
 export function downloadCsv(nodes: SplicerNode[], today: string, who = "billing") {
-  const blob = new Blob([csvFor(nodes)], { type: "text/csv;charset=utf-8" });
+  const blob = new Blob([csvFor(nodes, CREW.includes(who as CrewName) ? (who as CrewName) : undefined)], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = `optimum-${who.toLowerCase()}-${today}.csv`;

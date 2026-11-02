@@ -122,7 +122,7 @@ export function NodesView() {
                       <span className="notice-tag missing-map">Map still coming</span>
                     )}
                   </td>
-                  <td className="amount">{node.status === "excluded" ? "—" : "$350"}</td>
+                  <td className="amount">{node.status === "excluded" ? "—" : node.completedBy === "Chris" ? "$300" : "$350"}</td>
                 </tr>
               );
             })}

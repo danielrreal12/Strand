@@ -20,13 +20,13 @@ import {
   X,
 } from "lucide-react";
 import {
-  PAY_PER_NODE,
+  CHRIS_RATE,
   activeNodes,
-  billable,
   crewById,
   downloadCsv,
-  mineNodes,
   money,
+  payableNodes,
+  personalTotal,
   type TabId,
 } from "@/lib/splicer";
 import { WeekCharts } from "./calendar";
@@ -51,9 +51,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const profile = crewById(splicer.person);
   const active = activeNodes(splicer.nodes);
   const completed = active.filter((node) => node.status === "completed");
-  const mine = mineNodes(completed, splicer.person).filter(billable);
+  const mine = payableNodes(splicer.nodes, splicer.person);
   const receivable = mine.filter((node) => !node.paidDate);
   const paid = mine.filter((node) => node.paidDate);
+  const partner = splicer.person !== "Chris";
   const open = active.filter((node) => node.status !== "completed");
   const progress = active.length ? (completed.length / active.length) * 100 : 0;
   const titles: Record<TabId, [string, string]> = {
@@ -180,10 +181,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <ArrowUpRight size={18} />
               </span>
               <strong>
-                {money(mine.length * PAY_PER_NODE)}
+                {money(personalTotal(splicer.nodes, splicer.person))}
                 <em>USD</em>
               </strong>
-              <small>{mine.length} of your nodes × $350</small>
+              <small>{partner ? `${mine.length} shared nodes · your half` : `${mine.length} nodes × $${CHRIS_RATE}`}</small>
             </div>
             <div className="stat">
               <span>
@@ -191,7 +192,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <Clock size={18} />
               </span>
               <strong>
-                {money(receivable.length * PAY_PER_NODE)}
+                {money(personalTotal(splicer.nodes, splicer.person, false))}
                 <em>USD</em>
               </strong>
               <small>{receivable.filter((node) => !node.payDate).length} of yours with no pay date</small>
@@ -202,7 +203,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <Wallet size={18} />
               </span>
               <strong>
-                {money(paid.length * PAY_PER_NODE)}
+                {money(personalTotal(splicer.nodes, splicer.person, true))}
                 <em>USD</em>
               </strong>
               <small>{paid.length} of yours paid and confirmed</small>
@@ -217,7 +218,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 </button>
               ))}
             </div>
-            <button className="text-button" onClick={() => downloadCsv(mineNodes(splicer.nodes, splicer.person), splicer.today, splicer.person)}>
+            <button className="text-button" onClick={() => downloadCsv(payableNodes(splicer.nodes, splicer.person), splicer.today, splicer.person)}>
               <Download size={16} /> Export my CSV
             </button>
           </div>

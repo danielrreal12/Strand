@@ -165,7 +165,7 @@ function NodeModal({ node }: { node: SplicerNode }) {
                   </option>
                 ))}
               </select>
-              <small>This name is who gets the $350. Each access code only opens that person's billing.</small>
+              <small>Daniel and Iván split each day’s $350 nodes in half. Chris is paid $300 for his own nodes.</small>
             </label>
             <label>
               Completion date

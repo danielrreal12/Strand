@@ -3,23 +3,25 @@
 import { ArrowUpRight, Wallet } from "lucide-react";
 import { useSplicer } from "./provider";
 import {
+  CHRIS_RATE,
   PAY_PER_NODE,
   STATUS_LABEL,
-  billable,
   billingWeeks,
   crewById,
   formatShort,
-  mineNodes,
   money,
+  payableNodes,
+  shareAmount,
 } from "@/lib/splicer";
 
 export function BillingView() {
   const splicer = useSplicer();
   const profile = crewById(splicer.person);
-  const own = mineNodes(splicer.nodes, splicer.person);
-  const weeks = billingWeeks(own, splicer.today);
+  const partner = splicer.person !== "Chris";
+  const own = payableNodes(splicer.nodes, splicer.person);
+  const weeks = billingWeeks(splicer.nodes, splicer.today, splicer.person);
   const completed = own.filter((node) => node.status === "completed");
-  const receivable = completed.filter((node) => billable(node) && !node.paidDate);
+  const receivable = completed.filter((node) => !node.paidDate);
   const byPay = receivable.reduce<Record<string, typeof receivable>>((groups, node) => {
     const key = node.payDate || "No date";
     groups[key] ??= [];
@@ -32,7 +34,7 @@ export function BillingView() {
     groups[node.completed].push(node);
     return groups;
   }, {});
-  const detail = completed.filter(billable);
+  const detail = completed;
 
   return (
     <div className="billing-grid">
@@ -40,10 +42,14 @@ export function BillingView() {
         <div className="panel-heading">
           <div>
             <h2>Your billing by week</h2>
-            <p>{profile.name} · $350 USD / node</p>
+            <p>{partner ? `${profile.name} · half of each day’s $350 nodes with ${splicer.person === "Daniel" ? "Iván" : "Daniel"}` : `${profile.name} · $${CHRIS_RATE} USD / node`}</p>
           </div>
         </div>
-        <p className="production-rule">This tab is only {profile.name}'s pay. Set Completed by on the node sheet when the work is logged. Jobs with no name stay off every personal bill. Reassigned nodes and nodes marked out of billing stay out of payable production.</p>
+        <p className="production-rule">
+          {partner
+            ? `You and ${splicer.person === "Daniel" ? "Iván" : "Daniel"} split each day’s nodes in half, even when one of you finishes more. This tab is your half only. Chris’s pay stays on his code.`
+            : "This tab is only your nodes, at $300 each. Daniel and Iván’s split stays off this page."}
+        </p>
         <div className="table-scroll">
           <table>
             <thead>
@@ -113,7 +119,7 @@ export function BillingView() {
                           <td>{formatShort(node.completed)}</td>
                           <td>{formatShort(node.payDate)}</td>
                           <td>{node.paidDate ? formatShort(node.paidDate) : "Pending"}</td>
-                          <td className="amount">$350</td>
+                          <td className="amount">{money(shareAmount(node, splicer.person))}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -162,7 +168,7 @@ export function BillingView() {
                       {group.length} nodes · {day !== "No date" && day < splicer.today ? "Expected pay overdue" : "Waiting to be received"}
                     </small>
                   </div>
-                  <strong>{money(group.length * PAY_PER_NODE)}</strong>
+                  <strong>{money(group.reduce((sum, node) => sum + shareAmount(node, splicer.person), 0))}</strong>
                 </div>
                 <div className="chips">
                   {group.map((node) => (
@@ -206,7 +212,7 @@ export function BillingView() {
                 </div>
                 <span>
                   {group.length} nodes
-                  <strong>{money(group.filter(billable).length * PAY_PER_NODE)}</strong>
+                  <strong>{money(group.reduce((sum, node) => sum + shareAmount(node, splicer.person), 0))}</strong>
                 </span>
               </div>
             ))
@@ -216,11 +222,15 @@ export function BillingView() {
           </div>
         )}
         <div className="rate">
-          <span>Rate per node</span>
+          <span>{partner ? "Your half per node" : "Your rate per node"}</span>
           <strong>
-            $350 <small>USD</small>
+            ${partner ? PAY_PER_NODE / 2 : CHRIS_RATE} <small>USD</small>
           </strong>
-          <p>Each completed node included in billing adds $350. Reassigned nodes and nodes marked out of billing stay in production, without pay.</p>
+          <p>
+            {partner
+              ? `Every node you or ${splicer.person === "Daniel" ? "Iván" : "Daniel"} finish is $350. That day’s total is split in half, so each node on this page is your $175.`
+              : "Each node with your name on it pays $300. It is not part of the $350 split."}
+          </p>
         </div>
       </section>
       <section className="panel billing-table">
@@ -258,7 +268,7 @@ export function BillingView() {
                   </td>
                   <td>{formatShort(node.payDate)}</td>
                   <td>{node.paidDate ? formatShort(node.paidDate) : "Pending"}</td>
-                  <td className="amount">$350</td>
+                  <td className="amount">{money(shareAmount(node, splicer.person))}</td>
                 </tr>
               ))}
             </tbody>
