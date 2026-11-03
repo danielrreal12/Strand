@@ -132,8 +132,10 @@ test("live board totals stay at 97 completed and $30,800 generated", () => {
   assert.equal(memberByPin("6841")?.role, "splicer");
   assert.equal(memberByPin("0000"), null);
   assert.equal(readFileSync(new URL("./splicer.ts", import.meta.url), "utf8").includes("5796"), false);
-  assert.equal(weekBounds("2026-11-04").start, "2026-11-02");
-  assert.equal(weekBounds("2026-11-04").end, "2026-11-08");
+  assert.equal(weekBounds("2026-11-04").start, "2026-10-30");
+  assert.equal(weekBounds("2026-11-04").end, "2026-11-05");
+  assert.equal(weekBounds("2026-10-30").start, "2026-10-30");
+  assert.equal(weekBounds("2026-10-29").end, "2026-10-29");
 });
 
 test("splicers can log their own completion and cannot rewrite payment records", () => {

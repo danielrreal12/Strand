@@ -306,14 +306,10 @@ export function directionLegs(points: { lat: number; lng: number }[]) {
   return legs;
 }
 
-export function mondayOf(iso: string) {
-  const date = new Date(`${iso}T12:00:00`);
-  date.setDate(date.getDate() - ((date.getDay() + 6) % 7));
-  return date;
-}
-
 export function weekBounds(iso: string) {
-  const start = isoFromDate(mondayOf(iso));
+  const date = new Date(`${iso}T12:00:00`);
+  date.setDate(date.getDate() - ((date.getDay() + 2) % 7));
+  const start = isoFromDate(date);
   return { start, end: addDays(start, 6) };
 }
 

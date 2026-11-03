@@ -14,7 +14,6 @@ import {
   formatMonth,
   formatShort,
   isoFromDate,
-  mondayOf,
   money,
   monthGrid,
   placedOn,
@@ -28,21 +27,19 @@ export function WeekCharts() {
   const active = activeNodes(nodes);
   const completed = active.filter((node) => node.status === "completed");
   const bounds = weekBounds(today);
-  const monday = mondayOf(today);
-  const mondayIso = bounds.start;
-  const sundayIso = bounds.end;
-  const days = Array.from({ length: 5 }, (_, index) => {
-    const date = new Date(monday);
-    date.setDate(monday.getDate() + index);
+  const weekStart = new Date(`${bounds.start}T12:00:00`);
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(weekStart);
+    date.setDate(weekStart.getDate() + index);
     const key = isoFromDate(date);
     const label = date.toLocaleDateString("en-US", { weekday: "short" });
     return { key, label, count: completed.filter((node) => node.completed === key).length };
   });
-  const doneThisWeek = completed.filter((node) => node.completed >= mondayIso && node.completed <= today).length;
+  const doneThisWeek = completed.filter((node) => node.completed >= bounds.start && node.completed <= today).length;
   const plan = active.filter(
     (node) =>
-      (node.completed >= mondayIso && node.completed <= today) ||
-      (node.status !== "completed" && node.due >= mondayIso && node.due <= sundayIso),
+      (node.completed >= bounds.start && node.completed <= today) ||
+      (node.status !== "completed" && node.due >= bounds.start && node.due <= bounds.end),
   ).length;
   const percent = plan ? Math.min(100, Math.round((doneThisWeek / plan) * 100)) : 0;
   const max = Math.max(1, ...days.map((day) => day.count));
@@ -54,7 +51,7 @@ export function WeekCharts() {
         <div className="panel-heading">
           <div>
             <h2>Nodes completed by day</h2>
-            <p>This week only · {formatShort(mondayIso)}–{formatShort(sundayIso)} · {total} finished. All-time is the other number.</p>
+            <p>This billing week only · {formatShort(bounds.start)}–{formatShort(bounds.end)} · {total} finished. Friday through Thursday. All-time is the other number.</p>
           </div>
         </div>
         <div className="bar-chart" role="img" aria-label="Nodes completed by day this week">
@@ -101,7 +98,7 @@ export function CalendarView() {
   const open = active.filter((node) => node.status !== "completed");
   const missing = active.filter((node) => !node.map);
   const cells = monthGrid(splicer.month);
-  const weekStart = isoFromDate(mondayOf(splicer.selectedDay));
+  const weekStart = weekBounds(splicer.selectedDay).start;
   const weekDays = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
   const agenda = active
     .filter((node) => placedOn(node, splicer.calendarMode, splicer.anchor) === splicer.selectedDay)

@@ -69,8 +69,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
     today: [
       "Today's route.",
       weekDone.length
-        ? `${weekDone.length} finished this week (${weekLabel}). ${completed.length} all time.`
-        : `0 finished this week (${weekLabel}). ${completed.length} all time, from earlier weeks.`,
+        ? `${weekDone.length} finished this billing week (${weekLabel}). ${completed.length} all time.`
+        : `0 finished this billing week (${weekLabel}). ${completed.length} all time, from earlier weeks.`,
     ],
     calendar: ["Your work, on the calendar.", "The week is the working view. The month is there when you need it."],
     routes: ["The day, stop by stop.", "Six stops each, grouped by how close the nodes are."],
@@ -180,14 +180,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <div className="stats">
             <div className="stat">
               <span>
-                This week
+                This billing week
                 <CircleCheck size={18} />
               </span>
               <strong>
                 {weekDone.length}
                 <em> finished</em>
               </strong>
-              <small>{weekLabel}. {weekDone.length ? "Finished this week only." : "New week. Nothing logged yet."}</small>
+              <small>{weekLabel}. Friday through Thursday. {weekDone.length ? "Finished this billing week only." : "New billing week. Nothing logged yet."}</small>
             </div>
             <div className="stat">
               <span>
@@ -212,7 +212,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 {money(personalTotal(weekDone, splicer.person))}
                 <em>USD</em>
               </strong>
-              <small>{weekLabel}. Separate from all-time pay.</small>
+              <small>{weekLabel}. Friday through Thursday, separate from all-time pay.</small>
             </div>
             <div className="stat green">
               <span>
