@@ -594,7 +594,9 @@ export function normalizePlan(plan: Partial<RoutePlan> & { day: string }): Route
 }
 
 export function buildDayRoute(day: string, nodes: SplicerNode[], previous: RoutePlan | null): RoutePlan {
-  const open = nodes.filter((node) => node.status !== "completed" && node.status !== "excluded");
+  const open = nodes.filter(
+    (node) => node.status !== "completed" && node.status !== "excluded" && (!node.start || node.start <= day),
+  );
   const byCode = new Map(open.map((node) => [node.code, node]));
   const lists: Record<CrewName, string[]> = { Daniel: [], Iván: [], Chris: [] };
   if (previous) {

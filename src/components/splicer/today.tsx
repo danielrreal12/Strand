@@ -14,6 +14,12 @@ export function TodayView() {
   const next = nextIndex >= 0 ? stops[nextIndex] : null;
   const navigate = next ? driveTo(next) : "";
   const google = next ? googleDriveTo(next) : "";
+  const upcoming = splicer.nodes
+    .filter((node) => node.status !== "completed" && node.status !== "excluded" && node.start > splicer.today)
+    .sort((a, b) => a.start.localeCompare(b.start) || a.code.localeCompare(b.code));
+  const nextStart = upcoming[0]?.start ?? "";
+  const starting = nextStart ? upcoming.filter((node) => node.start === nextStart) : [];
+  const sharedDue = starting.length && starting.every((node) => node.due && node.due === starting[0].due) ? starting[0].due : "";
 
   return (
     <div className="today-layout">
@@ -25,6 +31,8 @@ export function TodayView() {
             <p>{next.address || "Address not listed on the node."}</p>
             <p className="next-meta">
               Stop {nextIndex + 1} of {stops.length}
+              {next.job ? ` · ${next.job}` : ""}
+              {next.due ? ` · Due ${formatShort(next.due)}` : ""}
               {next.gps ? ` · ${next.gps}` : " · Coordinates still coming"}
               {next.night ? " · Night cut" : ""}
             </p>
@@ -54,8 +62,14 @@ export function TodayView() {
           </>
         ) : (
           <>
-            <h2>{stops.length ? "Today’s stops are finished" : "No stops on your list"}</h2>
-            <p>{stops.length ? "The next open nodes will fill in tomorrow." : "Open the map if the day’s split needs another look."}</p>
+            <h2>{stops.length ? "Today’s stops are finished" : nextStart ? "Nothing starts today" : "No stops on your list"}</h2>
+            <p>
+              {stops.length
+                ? "The next open nodes will fill in tomorrow."
+                : nextStart
+                  ? `${starting.length} node${starting.length === 1 ? "" : "s"} start ${formatLong(nextStart)}${sharedDue ? ` and are due ${formatLong(sharedDue)}` : ""}.`
+                  : "Open the map if the day’s split needs another look."}
+            </p>
             <button className="primary today-map" type="button" onClick={() => splicer.setTab("routes")}>
               <MapPin size={16} />
               Open the map
@@ -97,8 +111,12 @@ export function TodayView() {
           </ol>
         ) : (
           <div className="empty">
-            <strong>Nothing assigned for {formatShort(splicer.today)}</strong>
-            <p>Finished stops drop off. The nearest open nodes fill the list back to six.</p>
+            <strong>{nextStart ? `Starts ${formatShort(nextStart)}` : `Nothing assigned for ${formatShort(splicer.today)}`}</strong>
+            <p>
+              {nextStart
+                ? "These nodes stay off the list until the authorized start."
+                : "Finished stops drop off. The nearest open nodes fill the list back to six."}
+            </p>
           </div>
         )}
       </section>

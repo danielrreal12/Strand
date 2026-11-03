@@ -88,19 +88,44 @@ test("live board totals stay at 97 completed and $30,800 generated", () => {
     "B555A",
     "B567A",
   ];
+  const jobs: Record<string, string> = {
+    B220A: "WISE-001970",
+    B223A: "WISE-001978",
+    B223B: "WISE-001979",
+    B223X: "WISE-001980",
+    B224A: "WISE-001982",
+    B224X: "WISE-002095",
+    B227A: "WISE-001989",
+    B227B: "WISE-001990",
+    B227C: "WISE-001991",
+    B227X: "WISE-001992",
+    B230A: "WISE-001995",
+    B287A: "WISE-001997",
+    B287X: "WISE-001998",
+    B374A: "WISE-001969",
+    B379A: "WISE-001973",
+    B383A: "WISE-001981",
+    B384A: "WISE-001996",
+    B445X: "WISE-001993",
+    B555A: "WISE-001984",
+    B567A: "WISE-001983",
+  };
   for (const code of added) {
     const node = nodes.find((item) => item.code === code);
     assert.ok(node, code);
     assert.equal(node.status, "pending");
     assert.equal(node.completed, "");
     assert.equal(node.completedBy, "");
-    assert.equal(node.start, "");
-    assert.equal(node.due, "");
+    assert.equal(node.start, "2026-11-03");
+    assert.equal(node.due, "2026-11-10");
+    assert.equal(node.job, jobs[code]);
     assert.match(node.gps, /^-?\d+\.\d+, -?\d+\.\d+$/);
     assert.equal(node.map, `${code}_Overall Map.pdf`);
   }
-  const today = routeForDay("2026-11-02", nodes, {});
-  const assigned = [...today.Daniel, ...today.Iván, ...today.Chris];
+  const monday = routeForDay("2026-11-02", nodes, {});
+  assert.equal([...monday.Daniel, ...monday.Iván, ...monday.Chris].length, 0);
+  const tuesday = routeForDay("2026-11-03", nodes, {});
+  const assigned = [...tuesday.Daniel, ...tuesday.Iván, ...tuesday.Chris];
   assert.equal(assigned.length, 18);
   assert.ok(assigned.every((code) => added.includes(code)));
   assert.equal(memberByPin("5796")?.id, "Daniel");
