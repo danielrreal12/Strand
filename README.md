@@ -8,7 +8,7 @@ Daniel can edit payment dates, invoices, the day’s split, and backups. Iván a
 
 Access codes: Daniel **5796**, Iván **6841**, Chris **9135**. On an iPhone, Today has a Navigate button that opens driving directions.
 
-On an iPhone, open the `/go` link. That page is a short form with today’s stops, Navigate, and a button to mark the next stop finished. It does not download the full board, which is what was leaving Safari on a blank screen. The link is a Serveo address (`https://….serveousercontent.com/go`). The same address comes back when the tunnel reconnects from this machine. `scripts/keep-board-up.sh` restarts the board if it stops answering, and it reopens that tunnel without asking Serveo for a new name. The address in use is written to `/tmp/splicer-public-url.txt`.
+On an iPhone, open https://paigesplicer.loca.lt/go. The first screen shows an IP address. Type that number and tap Continue, then enter the access code. That page is a short form with today’s stops, Navigate, and a button to mark the next stop finished. It does not download the full board. The address stays `paigesplicer.loca.lt`. `scripts/keep-board-up.sh` restarts the board if it stops answering, and it reopens that same address. The address in use is written to `/tmp/splicer-public-url.txt`.
 
 Map PDFs open from **View PDF**. On this machine they are cached under `public/maps` when the original board is reachable. Those files are large and are not part of the git history.
 

@@ -52,7 +52,7 @@ function cookieHeader(token: string, secure: boolean) {
 
 function secureCookie(request: Request) {
   const host = request.headers.get("host") || "";
-  return host.endsWith(".lhr.life") || host.endsWith(".trycloudflare.com") || request.headers.get("x-forwarded-proto") === "https";
+  return host.endsWith(".lhr.life") || host.endsWith(".trycloudflare.com") || host.endsWith(".loca.lt") || host.endsWith(".serveousercontent.com") || host.endsWith(".serveo.net") || request.headers.get("x-forwarded-proto") === "https";
 }
 
 function clientIp(request: Request) {
