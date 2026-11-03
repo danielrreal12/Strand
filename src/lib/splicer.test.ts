@@ -40,13 +40,13 @@ test("billing periods match the Optimum cuts", () => {
   assert.equal(billingPeriod("2026-10-30").payDate, "2026-11-20");
 });
 
-test("live board totals stay at 94 completed and $30,800 generated", () => {
+test("live board totals stay at 97 completed and $30,800 generated", () => {
   const nodes = seedNodesList();
-  assert.equal(nodes.length, 99);
+  assert.equal(nodes.length, 119);
   const active = nodes.filter((node) => node.status !== "excluded");
   const completed = active.filter((node) => node.status === "completed");
   const generated = completed.filter((node) => node.billingIncluded !== false);
-  assert.equal(active.length, 97);
+  assert.equal(active.length, 117);
   assert.equal(completed.length, 97);
   assert.equal(generated.length * 350, 30800);
   const weeks = billingWeeks(nodes, "2026-11-02");
@@ -66,6 +66,43 @@ test("live board totals stay at 94 completed and $30,800 generated", () => {
   assert.equal(personalTotal(nodes, "Daniel"), 15400);
   assert.equal(personalTotal(nodes, "Iván"), 15400);
   assert.equal(personalTotal(nodes, "Chris"), 2700);
+  const added = [
+    "B220A",
+    "B223A",
+    "B223B",
+    "B223X",
+    "B224A",
+    "B224X",
+    "B227A",
+    "B227B",
+    "B227C",
+    "B227X",
+    "B230A",
+    "B287A",
+    "B287X",
+    "B374A",
+    "B379A",
+    "B383A",
+    "B384A",
+    "B445X",
+    "B555A",
+    "B567A",
+  ];
+  for (const code of added) {
+    const node = nodes.find((item) => item.code === code);
+    assert.ok(node, code);
+    assert.equal(node.status, "pending");
+    assert.equal(node.completed, "");
+    assert.equal(node.completedBy, "");
+    assert.equal(node.start, "");
+    assert.equal(node.due, "");
+    assert.match(node.gps, /^-?\d+\.\d+, -?\d+\.\d+$/);
+    assert.equal(node.map, `${code}_Overall Map.pdf`);
+  }
+  const today = routeForDay("2026-11-02", nodes, {});
+  const assigned = [...today.Daniel, ...today.Iván, ...today.Chris];
+  assert.equal(assigned.length, 18);
+  assert.ok(assigned.every((code) => added.includes(code)));
   assert.equal(memberByPin("5796")?.id, "Daniel");
   assert.equal(memberByPin("6841")?.role, "splicer");
   assert.equal(memberByPin("0000"), null);
