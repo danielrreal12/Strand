@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
 # Keep the Optimum board reachable from a phone.
 #
-# Restart the local server if it stops answering.
-# Keep one localhost.run tunnel pointed at that server.
-# Never replace a tunnel that still answers: a new SSH session gets a new
-# name, and the phone then says "no tunnel" on the old address.
-# Do not open trycloudflare.com names. Those DNS records get deleted and
-# Safari says the server cannot be found.
+# The phone address is a Serveo hostname tied to this machine. Reconnecting
+# asks for the same name. Do not open a localhost.run or trycloudflare.com
+# address: those names are thrown away while the phone still has them, and
+# Safari then says "no tunnel" or that the server cannot be found.
 #
 # The live address (the /go phone page) is written to /tmp/splicer-public-url.txt.
 set -u
@@ -14,10 +12,9 @@ set -u
 PORT=3847
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LOG=/tmp/splicer-keep.log
-SSH_LOG=/tmp/splicer-ssh.log
+SSH_LOG=/tmp/splicer-serveo.log
 URL_FILE=/tmp/splicer-public-url.txt
 PID_FILE=/tmp/splicer-keep.pid
-KEY="$ROOT/.data/tunnel_ed25519"
 
 log() {
   printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" | tee -a "$LOG"
@@ -28,22 +25,22 @@ local_ok() {
 }
 
 ssh_pid() {
-  ps -eo pid,cmd | awk '/ssh/ && /nokey@localhost.run/ && /-R 80:127.0.0.1:'"$PORT"'/ && !/awk/ { print $1; exit }'
+  ps -eo pid,cmd | awk '/ssh/ && /serveo\.net/ && !/awk/ { print $1; exit }'
 }
 
 latest_url() {
   [[ -f "$SSH_LOG" ]] || return 1
   local host
-  host="$(grep -aoE '[a-z0-9]+\.lhr\.life' "$SSH_LOG" | tail -1 || true)"
+  host="$(grep -aoE '[a-z0-9.-]+\.serveousercontent\.com' "$SSH_LOG" | tail -1 || true)"
   [[ -n "$host" ]] || return 1
   printf 'https://%s/go\n' "$host"
 }
 
 public_ok() {
   local url="$1" code
-  code="$(curl -sS -o /tmp/splicer-public-body --max-time 12 -w '%{http_code}' -A 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)' "$url" || true)"
+  code="$(curl -sS -o /tmp/splicer-public-body --max-time 12 -w '%{http_code}' -A 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15' "$url" || true)"
   [[ "$code" == "200" ]] || return 1
-  ! grep -q 'no tunnel' /tmp/splicer-public-body
+  grep -q 'Access code\|Splicer' /tmp/splicer-public-body
 }
 
 start_next() {
@@ -71,19 +68,15 @@ start_tunnel() {
   if [[ -n "$(ssh_pid)" ]]; then
     return 0
   fi
-  if [[ ! -f "$KEY" ]]; then
-    log "phone tunnel key is missing"
-    return 1
-  fi
-  log "opening a phone tunnel"
-  nohup ssh -i "$KEY" \
+  log "opening the phone tunnel"
+  nohup ssh \
     -o StrictHostKeyChecking=accept-new \
     -o ServerAliveInterval=30 \
     -o ServerAliveCountMax=20 \
     -o ExitOnForwardFailure=yes \
     -o TCPKeepAlive=yes \
-    -R "80:127.0.0.1:${PORT}" \
-    nokey@localhost.run >> "$SSH_LOG" 2>&1 &
+    -R "paigesplicer:80:127.0.0.1:${PORT}" \
+    serveo.net >> "$SSH_LOG" 2>&1 &
   local i url
   for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25; do
     sleep 1
