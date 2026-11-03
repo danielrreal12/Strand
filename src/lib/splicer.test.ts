@@ -206,3 +206,19 @@ test("each person gets at most six nearby stops, and unfinished stops stay first
   const chained = routeForDay("2026-11-04", [...nextNodes, ...extra], { "2026-11-03": previous });
   assert.deepEqual(chained.Chris.slice(0, 2), ["E0", "E1"]);
 });
+
+test("Tuesday November 3 keeps the hand split and leaves Chris at zero", () => {
+  const nodes = seedNodesList();
+  const plan = {
+    day: "2026-11-03",
+    Daniel: ["B223A", "B223B", "B223X", "B379A", "B383A"],
+    Iván: ["B224A", "B224X", "B230A", "B555A", "B445X"],
+    Chris: [] as string[],
+    saved: true,
+  };
+  const today = routeForDay("2026-11-03", nodes, { "2026-11-03": plan });
+  assert.deepEqual(today.Daniel, plan.Daniel);
+  assert.deepEqual(today.Iván, plan.Iván);
+  assert.deepEqual(today.Chris, []);
+  assert.equal(today.saved, true);
+});
