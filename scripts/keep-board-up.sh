@@ -26,14 +26,14 @@ latest_url() {
   local url
   url="$(grep -aoE 'https://[a-z0-9-]+\.trycloudflare\.com' "$CF_LOG" | tail -1 || true)"
   [[ -n "$url" ]] || return 1
-  printf '%s/go\n' "$url"
+  printf '%s/\n' "$url"
 }
 
 public_ok() {
   local url="$1" code
   code="$(curl -sS -o /tmp/splicer-public-body --max-time 12 -w '%{http_code}' -A 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1' "$url" || true)"
   [[ "$code" == "200" ]] || return 1
-  grep -q 'Access code' /tmp/splicer-public-body
+  grep -q 'Access code\|Loading your operation\|Splicer' /tmp/splicer-public-body
 }
 
 start_next() {
