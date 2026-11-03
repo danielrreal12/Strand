@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # Keep the Optimum board reachable from a phone.
 #
-# The local server is restarted if it stops answering. The public link is a
-# Cloudflare quick tunnel. A new address is opened only when that process has
-# exited. A slow check or an error in the log must not replace the address,
-# because the phone is already on the current one.
+# Restart the local server if it stops answering. Leave a running Cloudflare
+# tunnel alone. Replacing it deletes the name the phone is already using, and
+# Safari then says the server cannot be found.
 #
 # The live address is written to /tmp/splicer-public-url.txt.
 set -u
@@ -16,63 +15,9 @@ LOG=/tmp/splicer-keep.log
 CF_LOG=/tmp/cloudflared-splicer.log
 URL_FILE=/tmp/splicer-public-url.txt
 PID_FILE=/tmp/splicer-keep.pid
-FAILS=0
 
 log() {
   printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" | tee -a "$LOG"
-}
-
-port_open() {
-  python3 - "$PORT" << 'PY'
-import socket, sys
-sock = socket.socket()
-sock.settimeout(1)
-try:
-    sock.connect(("127.0.0.1", int(sys.argv[1])))
-except OSError:
-    raise SystemExit(1)
-finally:
-    sock.close()
-PY
-}
-
-listener_pid() {
-  python3 - "$PORT" << 'PY'
-import os, sys
-port = int(sys.argv[1])
-inode = None
-for name in ("/proc/net/tcp", "/proc/net/tcp6"):
-    try:
-        lines = open(name)
-    except OSError:
-        continue
-    for line in lines:
-        parts = line.split()
-        if len(parts) < 10 or ":" not in parts[1]:
-            continue
-        if int(parts[1].split(":")[1], 16) == port and parts[3] == "0A":
-            inode = parts[9]
-            break
-    if inode:
-        break
-if not inode:
-    raise SystemExit
-for pid in os.listdir("/proc"):
-    if not pid.isdigit():
-        continue
-    folder = f"/proc/{pid}/fd"
-    try:
-        names = os.listdir(folder)
-    except OSError:
-        continue
-    for name in names:
-        try:
-            if os.readlink(f"{folder}/{name}") == f"socket:[{inode}]":
-                print(pid)
-                raise SystemExit
-        except OSError:
-            pass
-PY
 }
 
 local_ok() {
@@ -91,43 +36,9 @@ latest_url() {
   printf '%s\n' "$url"
 }
 
-current_url() {
-  [[ -f "$URL_FILE" ]] || return 1
-  local url
-  url="$(tr -d '[:space:]' < "$URL_FILE")"
-  [[ "$url" == https://*.trycloudflare.com ]] || return 1
-  printf '%s\n' "$url"
-}
-
-# ok: the phone link answered. dead: the name is gone. slow: still connected.
-public_status() {
-  local url code
-  url="$(current_url)" || {
-    printf '%s\n' dead
-    return
-  }
-  code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$url/" || true)"
-  if [[ "$code" == "200" ]]; then
-    printf '%s\n' ok
-  elif [[ "$code" == "502" || "$code" == "503" || "$code" == "530" || "$code" == "404" || "$code" == "403" ]]; then
-    printf '%s\n' dead
-  else
-    printf '%s\n' slow
-  fi
-}
-
 start_next() {
-  if port_open && local_ok; then
+  if local_ok; then
     return 0
-  fi
-  if port_open; then
-    log "board port is open but not answering; restarting it"
-    local pid
-    pid="$(listener_pid || true)"
-    if [[ -n "${pid:-}" ]]; then
-      kill "$pid" 2>/dev/null || true
-      sleep 1
-    fi
   fi
   log "starting the board on port ${PORT}"
   (
@@ -148,8 +59,7 @@ start_next() {
 
 start_tunnel() {
   if [[ -n "$(cf_pid)" ]]; then
-    kill "$(cf_pid)" 2>/dev/null || true
-    sleep 1
+    return 0
   fi
   : > "$CF_LOG"
   log "opening a tunnel"
@@ -183,24 +93,14 @@ printf '%s\n' "$$" > "$PID_FILE"
 log "keeper started"
 while true; do
   start_next || true
-  if ! local_ok; then
-    log "board is down; skipping the public check"
-    sleep 5
-    continue
-  fi
   if [[ -z "$(cf_pid)" ]]; then
     log "tunnel process is gone"
     start_tunnel || true
-    FAILS=0
-    sleep 5
-    continue
+  else
+    url="$(latest_url || true)"
+    if [[ -n "$url" ]]; then
+      printf '%s\n' "$url" > "$URL_FILE"
+    fi
   fi
-  remembered="$(latest_url || true)"
-  if [[ -n "$remembered" && "$(current_url || true)" != "$remembered" ]]; then
-    printf '%s\n' "$remembered" > "$URL_FILE"
-    log "tunnel address is ${remembered}"
-  fi
-  # Leave the running tunnel alone. Replacing it gives the phone a name that
-  # no longer exists, which Safari reports as "server can't be found."
   sleep 20
 done
