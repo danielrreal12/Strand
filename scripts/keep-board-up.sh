@@ -2,10 +2,9 @@
 # Keep the Optimum board reachable from a phone.
 #
 # The local server is restarted if it stops answering. The public link is a
-# Cloudflare quick tunnel. It is much faster than an SSH tunnel, so the phone
-# can finish loading the page. If Cloudflare drops the name, the process would
-# otherwise keep retrying that dead name and the phone would stay blank. This
-# script then opens a new tunnel and records the new address.
+# Cloudflare quick tunnel. A new address is opened only when that process has
+# exited. A slow check or an error in the log must not replace the address,
+# because the phone is already on the current one.
 #
 # The live address is written to /tmp/splicer-public-url.txt.
 set -u
@@ -117,11 +116,6 @@ public_status() {
   fi
 }
 
-name_dropped() {
-  [[ -f "$CF_LOG" ]] || return 1
-  grep -q 'Unauthorized: Tunnel not found' "$CF_LOG"
-}
-
 start_next() {
   if port_open && local_ok; then
     return 0
@@ -206,31 +200,7 @@ while true; do
     printf '%s\n' "$remembered" > "$URL_FILE"
     log "tunnel address is ${remembered}"
   fi
-  if name_dropped; then
-    log "cloudflare dropped this name"
-    start_tunnel || true
-    FAILS=0
-    sleep 5
-    continue
-  fi
-  status="$(public_status)"
-  if [[ "$status" == "ok" ]]; then
-    if [[ "$FAILS" != "0" ]]; then
-      log "public link recovered $(current_url)"
-    fi
-    FAILS=0
-  elif [[ "$status" == "slow" ]]; then
-    log "public check slow; keeping this tunnel $(current_url || true)"
-  else
-    FAILS=$((FAILS + 1))
-    log "public link is dead (${FAILS}) $(current_url || true)"
-    if [[ "$FAILS" -ge 2 ]]; then
-      start_tunnel || true
-      if [[ "$(public_status)" == "ok" ]]; then
-        log "public link recovered after a new tunnel $(current_url)"
-        FAILS=0
-      fi
-    fi
-  fi
+  # Leave the running tunnel alone. Replacing it gives the phone a name that
+  # no longer exists, which Safari reports as "server can't be found."
   sleep 20
 done
