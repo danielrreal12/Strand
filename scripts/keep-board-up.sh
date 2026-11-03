@@ -1,21 +1,20 @@
 #!/usr/bin/env bash
 # Keep the Optimum board reachable from a phone.
 #
-# The local server is restarted if it stops answering. The public tunnel is an
-# SSH connection to localhost.run with keepalives. A Cloudflare quick tunnel is
-# not used: when that name expires, the process retries the dead name forever
-# and the phone stays on a page that never loads.
+# The local server is restarted if it stops answering. The public link is a
+# Cloudflare quick tunnel. It is much faster than an SSH tunnel, so the phone
+# can finish loading the page. If Cloudflare drops the name, the process would
+# otherwise keep retrying that dead name and the phone would stay blank. This
+# script then opens a new tunnel and records the new address.
 #
-# The live address is written to /tmp/splicer-public-url.txt. A free tunnel
-# name lasts for the life of this connection. If the connection has to be
-# rebuilt, localhost.run issues a new name and this script records it.
+# The live address is written to /tmp/splicer-public-url.txt.
 set -u
 
 PORT=3847
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-KEY="$ROOT/.data/tunnel_ed25519"
+CF=/tmp/cloudflared
 LOG=/tmp/splicer-keep.log
-SSH_LOG=/tmp/splicer-ssh.log
+CF_LOG=/tmp/cloudflared-splicer.log
 URL_FILE=/tmp/splicer-public-url.txt
 PID_FILE=/tmp/splicer-keep.pid
 FAILS=0
@@ -81,31 +80,46 @@ local_ok() {
   curl -sf -o /dev/null --max-time 8 "http://127.0.0.1:${PORT}/"
 }
 
-ssh_pid() {
-  ps -eo pid,cmd | awk '/nokey@localhost.run/ && !/awk/ { print $1; exit }'
+cf_pid() {
+  ps -eo pid,cmd | awk '/cloudflared tunnel/ && !/awk/ { print $1; exit }'
+}
+
+latest_url() {
+  [[ -f "$CF_LOG" ]] || return 1
+  local url
+  url="$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$CF_LOG" | tail -1 || true)"
+  [[ -n "$url" ]] || return 1
+  printf '%s\n' "$url"
 }
 
 current_url() {
   [[ -f "$URL_FILE" ]] || return 1
   local url
   url="$(tr -d '[:space:]' < "$URL_FILE")"
-  [[ "$url" == https://*.lhr.life ]] || return 1
+  [[ "$url" == https://*.trycloudflare.com ]] || return 1
   printf '%s\n' "$url"
 }
 
-public_ok() {
+# ok: the phone link answered. dead: the name is gone. slow: still connected.
+public_status() {
   local url code
-  url="$(current_url)" || return 1
-  code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 12 "$url/" || true)"
-  [[ "$code" == "200" ]]
+  url="$(current_url)" || {
+    printf '%s\n' dead
+    return
+  }
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$url/" || true)"
+  if [[ "$code" == "200" ]]; then
+    printf '%s\n' ok
+  elif [[ "$code" == "502" || "$code" == "503" || "$code" == "530" || "$code" == "404" || "$code" == "403" ]]; then
+    printf '%s\n' dead
+  else
+    printf '%s\n' slow
+  fi
 }
 
-ensure_key() {
-  if [[ -f "$KEY" ]]; then
-    return 0
-  fi
-  mkdir -p "$ROOT/.data"
-  ssh-keygen -t ed25519 -f "$KEY" -N '' -C 'splicer-tunnel' >/dev/null
+name_dropped() {
+  [[ -f "$CF_LOG" ]] || return 1
+  grep -q 'Unauthorized: Tunnel not found' "$CF_LOG"
 }
 
 start_next() {
@@ -139,30 +153,23 @@ start_next() {
 }
 
 start_tunnel() {
-  if [[ -n "$(ssh_pid)" ]]; then
-    kill "$(ssh_pid)" 2>/dev/null || true
+  if [[ -n "$(cf_pid)" ]]; then
+    kill "$(cf_pid)" 2>/dev/null || true
     sleep 1
   fi
-  : > "$SSH_LOG"
+  : > "$CF_LOG"
   log "opening a tunnel"
-  nohup ssh -i "$KEY" \
-    -o StrictHostKeyChecking=accept-new \
-    -o ServerAliveInterval=15 \
-    -o ServerAliveCountMax=3 \
-    -o ExitOnForwardFailure=yes \
-    -o TCPKeepAlive=yes \
-    -R 80:127.0.0.1:${PORT} \
-    nokey@localhost.run >> "$SSH_LOG" 2>&1 &
+  nohup "$CF" tunnel --url "http://127.0.0.1:${PORT}" --no-autoupdate --protocol http2 --logfile "$CF_LOG" --loglevel info >> "$CF_LOG" 2>&1 &
   local i url
   for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
     sleep 1
-    url="$(grep -oE 'https://[a-z0-9]+\.lhr\.life' "$SSH_LOG" | tail -1 || true)"
+    url="$(latest_url || true)"
     if [[ -n "$url" ]]; then
       printf '%s\n' "$url" > "$URL_FILE"
       log "tunnel address is ${url}"
       return 0
     fi
-    if [[ -z "$(ssh_pid)" ]]; then
+    if [[ -z "$(cf_pid)" ]]; then
       log "tunnel process exited"
       return 1
     fi
@@ -180,7 +187,6 @@ if [[ -f "$PID_FILE" ]]; then
 fi
 printf '%s\n' "$$" > "$PID_FILE"
 log "keeper started"
-ensure_key
 while true; do
   start_next || true
   if ! local_ok; then
@@ -188,24 +194,39 @@ while true; do
     sleep 5
     continue
   fi
-  if [[ -z "$(ssh_pid)" ]]; then
+  if [[ -z "$(cf_pid)" ]]; then
     log "tunnel process is gone"
     start_tunnel || true
     FAILS=0
     sleep 5
     continue
   fi
-  if public_ok; then
+  remembered="$(latest_url || true)"
+  if [[ -n "$remembered" && "$(current_url || true)" != "$remembered" ]]; then
+    printf '%s\n' "$remembered" > "$URL_FILE"
+    log "tunnel address is ${remembered}"
+  fi
+  if name_dropped; then
+    log "cloudflare dropped this name"
+    start_tunnel || true
+    FAILS=0
+    sleep 5
+    continue
+  fi
+  status="$(public_status)"
+  if [[ "$status" == "ok" ]]; then
     if [[ "$FAILS" != "0" ]]; then
       log "public link recovered $(current_url)"
     fi
     FAILS=0
+  elif [[ "$status" == "slow" ]]; then
+    log "public check slow; keeping this tunnel $(current_url || true)"
   else
     FAILS=$((FAILS + 1))
-    log "public check failed (${FAILS}) $(current_url || true)"
-    if [[ "$FAILS" -ge 3 ]]; then
+    log "public link is dead (${FAILS}) $(current_url || true)"
+    if [[ "$FAILS" -ge 2 ]]; then
       start_tunnel || true
-      if public_ok; then
+      if [[ "$(public_status)" == "ok" ]]; then
         log "public link recovered after a new tunnel $(current_url)"
         FAILS=0
       fi

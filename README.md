@@ -8,7 +8,7 @@ Daniel can edit payment dates, invoices, the day’s split, and backups. Iván a
 
 Access codes: Daniel **5796**, Iván **6841**, Chris **9135**. On an iPhone, Today has a Navigate button that opens driving directions.
 
-The phone link is an SSH tunnel, kept up by `scripts/keep-board-up.sh`. That script restarts the board if it stops answering, and it restarts the tunnel if the public address stops answering. The address currently in use is written to `/tmp/splicer-public-url.txt`. A free tunnel name lasts for that connection. Registering `.data/tunnel_ed25519.pub` at [admin.localhost.run](https://admin.localhost.run) keeps the same name across rebuilds.
+The phone link is a Cloudflare tunnel, kept up by `scripts/keep-board-up.sh`. That script restarts the board if it stops answering, and it opens a new public name only after Cloudflare drops the current one. The address currently in use is written to `/tmp/splicer-public-url.txt`.
 
 Map PDFs open from **View PDF**. On this machine they are cached under `public/maps` when the original board is reachable. Those files are large and are not part of the git history.
 
