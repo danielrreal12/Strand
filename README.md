@@ -8,7 +8,7 @@ Daniel can edit payment dates, invoices, the day’s split, and backups. Iván a
 
 Access codes: Daniel **5796**, Iván **6841**, Chris **9135**. On an iPhone, Today has a Navigate button that opens driving directions.
 
-On an iPhone, open the one phone link and leave that tab. It is the full board: Today, the calendar, every node, the route, and billing. `scripts/keep-board-up.sh` restarts the board if it stops answering. It does not open a new phone address, because a new name leaves the old one dead. The address in use is `/tmp/splicer-public-url.txt`.
+On an iPhone, open `http://bore.pub:18473/` and leave that tab. It is the full board: Today, the calendar, every node, the route, and billing. `scripts/keep-board-up.sh` restarts the board if it stops answering, and reconnects that same address if the connection drops. It does not open a new phone address.
 
 Map PDFs open from **View PDF**. On this machine they are cached under `public/maps` when the original board is reachable. Those files are large and are not part of the git history.
 
