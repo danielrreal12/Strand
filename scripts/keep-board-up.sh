@@ -23,7 +23,7 @@ local_ok() {
 }
 
 bore_running() {
-  pgrep -f "${BORE_BIN} local ${PORT} --local-host 127.0.0.1 --to bore.pub --port ${REMOTE_PORT}" >/dev/null
+  pgrep -f "bore local ${PORT} --local-host 127.0.0.1 --to bore.pub --port ${REMOTE_PORT}" >/dev/null
 }
 
 if [[ -f "$PID_FILE" ]]; then
