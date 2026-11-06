@@ -1,6 +1,6 @@
 {
-  "name": "Splicer · Optimum",
-  "short_name": "Splicer",
+  "name": "Strand",
+  "short_name": "Strand",
   "description": "Node calendar, production, and billing for Optimum Fiber.",
   "start_url": "/",
   "scope": "/",

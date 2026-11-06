@@ -10,13 +10,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Splicer · Optimum",
+  title: "Strand",
   description: "Node calendar, production, and billing",
-  applicationName: "Splicer",
+  applicationName: "Strand",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Splicer",
+    title: "Strand",
   },
   formatDetection: { telephone: false },
   icons: {

@@ -83,7 +83,7 @@ const SplicerContext = createContext<SplicerState | null>(null);
 
 export function useSplicer() {
   const value = useContext(SplicerContext);
-  if (!value) throw new Error("Splicer is not ready");
+  if (!value) throw new Error("Strand is not ready");
   return value;
 }
 

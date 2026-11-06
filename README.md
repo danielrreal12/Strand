@@ -1,4 +1,4 @@
-# Splicer · Optimum
+# Strand
 
 Operations board for Optimum Fiber / Paige Communications. Today’s route opens first, then the week, the nodes, and each person’s billing.
 

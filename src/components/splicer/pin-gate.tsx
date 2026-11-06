@@ -36,7 +36,7 @@ export function PinGate({ onUnlock }: { onUnlock: (person: CrewName, role: CrewR
     <div className="pin-screen">
       <main className="pin-card">
         <small>OPTIMUM · PAIGE</small>
-        <h1>Welcome to Splicer</h1>
+        <h1>Welcome to Strand</h1>
         <p>Enter your access code. Today’s route opens first.</p>
         <form onSubmit={submit}>
           <label htmlFor="pin">Access code</label>

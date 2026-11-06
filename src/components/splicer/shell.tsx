@@ -88,7 +88,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <span className="brand-icon">
             <Activity size={25} />
           </span>
-          splicer
+          strand
           <span className="brand-dot">.</span>
         </a>
         <div className="workspace">
@@ -159,7 +159,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <main>
           <div className="heading">
             <div>
-              <div className="eyebrow">OPTIMUM FIBER OPERATIONS</div>
+              <div className="eyebrow">STRAND · OPTIMUM FIBER</div>
               <h1>{title}</h1>
               <p>{subtitle}</p>
             </div>
