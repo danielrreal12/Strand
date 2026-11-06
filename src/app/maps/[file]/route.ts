@@ -2,9 +2,8 @@ import { connection } from "next/server";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { currentSession } from "@/lib/session.server";
+import { mapsDir } from "@/lib/paths.server";
 import { seedNodesList } from "@/lib/splicer";
-
-const MAPS_DIR = path.join(process.cwd(), "private", "maps");
 
 function safeName(name: string) {
   const base = path.basename(name);
@@ -51,7 +50,7 @@ export async function GET(_request: Request, context: { params: Promise<{ file: 
   const known = new Set(seedNodesList().map((node) => node.map).filter(Boolean));
   if (!name || !known.has(name)) return new Response("Map not available", { status: 404 });
 
-  const local = path.join(MAPS_DIR, name);
+  const local = path.join(mapsDir(), name);
   try {
     const cached = await readFile(local);
     if (cached.subarray(0, 4).toString() === "%PDF") return pdfResponse(cached);
@@ -68,7 +67,7 @@ export async function GET(_request: Request, context: { params: Promise<{ file: 
   if (!response.ok) return new Response("Map not available", { status: 404 });
   const bytes = new Uint8Array(await response.arrayBuffer());
   if (new TextDecoder().decode(bytes.subarray(0, 4)) !== "%PDF") return new Response("Map not available", { status: 404 });
-  await mkdir(MAPS_DIR, { recursive: true });
+  await mkdir(mapsDir(), { recursive: true });
   await writeFile(local, bytes);
   return pdfResponse(bytes);
 }

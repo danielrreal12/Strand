@@ -1,0 +1,24 @@
+# Permanent Optimum board on Render.
+# Paid web plan is required so the disk keeps nodes and maps across deploys.
+services:
+  - type: web
+    name: optimum-splicer
+    runtime: node
+    plan: 0.5c-512mb
+    region: ohio
+    buildCommand: npm ci && npm run build
+    startCommand: bash scripts/start-production.sh
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATA_DIR
+        value: /var/data
+      - key: MAPS_DIR
+        value: /var/data/maps
+      - key: SPLICER_SESSION_SECRET
+        generateValue: true
+    disk:
+      name: splicer-data
+      mountPath: /var/data
+      sizeGB: 1

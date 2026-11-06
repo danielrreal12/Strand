@@ -1,8 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { mergeNodeEdit, normalizePlan, type CrewName, type CrewRole, type RoutePlan, type SplicerNode } from "./splicer";
-
-const STORE_FILE = path.join(process.cwd(), ".data", "production-store.json");
+import { dataDir, storeFile } from "./paths.server";
 
 export type ProductionStore = {
   updatedAt: string;
@@ -40,7 +38,7 @@ export function sanitizeStore(input: unknown): ProductionStore | null {
 
 export async function readStore(): Promise<ProductionStore | null> {
   try {
-    return sanitizeStore(JSON.parse(await readFile(STORE_FILE, "utf8")));
+    return sanitizeStore(JSON.parse(await readFile(storeFile(), "utf8")));
   } catch {
     return null;
   }
@@ -49,8 +47,8 @@ export async function readStore(): Promise<ProductionStore | null> {
 export async function writeStore(store: ProductionStore) {
   const clean = sanitizeStore({ ...store, updatedAt: new Date().toISOString() });
   if (!clean) throw new Error("The records aren’t valid.");
-  await mkdir(path.dirname(STORE_FILE), { recursive: true });
-  await writeFile(STORE_FILE, JSON.stringify(clean));
+  await mkdir(dataDir(), { recursive: true });
+  await writeFile(storeFile(), JSON.stringify(clean));
   return clean;
 }
 

@@ -8,7 +8,19 @@ Daniel can edit payment dates, invoices, the day’s split, and backups. Iván a
 
 Access codes: Daniel **5796**, Iván **6841**, Chris **9135**. On an iPhone, Today has a Navigate button that opens driving directions.
 
-On an iPhone, open the one phone link and leave that tab. It is the full board: Today, the calendar, every node, the route, and billing. The link has to be ordinary HTTPS on port 443; a high-numbered port does not open on a phone. `scripts/keep-board-up.sh` restarts the board if it stops answering. It does not open a new phone address. The address in use is `/tmp/splicer-public-url.txt`.
+On an iPhone, open the Render address (it stays the same). It is the full board: Today, the calendar, every node, the route, and billing.
+
+## Permanent site (Render)
+
+Render keeps one HTTPS address. Nodes and maps are stored on a disk so they survive deploys. That disk needs Render’s cheapest paid web plan (0.5 CPU / 512 MB), not the free plan.
+
+1. Put this repo on GitHub (private is fine). Render cannot pull from Origin directly.
+2. Create an account at [render.com](https://dashboard.render.com/register) and sign in with GitHub.
+3. New → Blueprint, pick the repo, apply `render.yaml`.
+4. Wait for the deploy. The board is `https://optimum-splicer.onrender.com` (Render adds a suffix if that name is taken).
+5. Sign in as Daniel. If this machine’s live records are not there yet, restore a backup from Billing.
+
+If you send a Render API key, the deploy can be finished from here. Until Render is live, a temporary tunnel on this machine will keep dying.
 
 Map PDFs open from **View PDF**. On this machine they are cached under `public/maps` when the original board is reachable. Those files are large and are not part of the git history.
 

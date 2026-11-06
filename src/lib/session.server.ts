@@ -1,10 +1,9 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { cookies } from "next/headers";
 import type { CrewName, CrewRole } from "./splicer";
+import { dataDir, sessionSecretFile } from "./paths.server";
 
-const SECRET_FILE = path.join(process.cwd(), ".data", "session-secret");
 const COOKIE = "splicer_session";
 export const SESSION_DAYS = 7;
 
@@ -49,14 +48,14 @@ export async function sessionSecret() {
   if (process.env.SPLICER_SESSION_SECRET) return process.env.SPLICER_SESSION_SECRET;
   secretPromise ??= (async () => {
     try {
-      const existing = (await readFile(SECRET_FILE, "utf8")).trim();
+      const existing = (await readFile(sessionSecretFile(), "utf8")).trim();
       if (existing) return existing;
     } catch {
       // First boot on this machine.
     }
     const created = randomBytes(32).toString("base64url");
-    await mkdir(path.dirname(SECRET_FILE), { recursive: true });
-    await writeFile(SECRET_FILE, created, { mode: 0o600 });
+    await mkdir(dataDir(), { recursive: true });
+    await writeFile(sessionSecretFile(), created, { mode: 0o600 });
     return created;
   })();
   return secretPromise;
