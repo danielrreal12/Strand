@@ -103,7 +103,7 @@ export function BillingView() {
         </div>
         <p className="production-rule">
           {partner
-            ? `You and ${splicer.person === "Daniel" ? "Iván" : "Daniel"} split each day’s nodes in half, even when one of you finishes more. This tab is your half only. Chris’s pay stays on his code. A billing week runs Friday through Thursday.`
+            ? `This is your half of the company week. The other board shows the full $350 total for you and ${splicer.person === "Daniel" ? "Iván" : "Daniel"}; this tab is your $175. Chris’s $300 stays on his code. A billing week runs Friday through Thursday.`}
             : "This tab lists only the nodes finished in your name, at $300 each. A billing week runs Friday through Thursday."}
         </p>
         <div className="table-scroll">

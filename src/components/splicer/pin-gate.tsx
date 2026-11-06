@@ -37,17 +37,17 @@ export function PinGate({ onUnlock }: { onUnlock: (person: CrewName, role: CrewR
       <div className="strand-gate-glow" aria-hidden="true" />
       <svg className="strand-fiber" viewBox="0 0 400 720" preserveAspectRatio="none" aria-hidden="true">
         <defs>
-          <linearGradient id="strand-copper" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#16325a" />
-            <stop offset="0.55" stopColor="#c4622d" />
-            <stop offset="1" stopColor="#8a3d18" />
+          <linearGradient id="strand-line" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#0e1c33" />
+            <stop offset="0.45" stopColor="#6d8eb8" />
+            <stop offset="1" stopColor="#c5d4e8" />
           </linearGradient>
         </defs>
         <path
           className="strand-fiber-line"
           d="M-20 80 C 80 40, 120 180, 210 150 S 330 80, 430 140 C 380 260, 40 250, 30 380 S 360 470, 420 560 C 280 640, 80 600, -20 700"
           fill="none"
-          stroke="url(#strand-copper)"
+          stroke="url(#strand-line)"
           strokeWidth="3"
           strokeLinecap="round"
         />
@@ -55,7 +55,7 @@ export function PinGate({ onUnlock }: { onUnlock: (person: CrewName, role: CrewR
           className="strand-fiber-glow"
           d="M-20 80 C 80 40, 120 180, 210 150 S 330 80, 430 140 C 380 260, 40 250, 30 380 S 360 470, 420 560 C 280 640, 80 600, -20 700"
           fill="none"
-          stroke="#c4622d"
+          stroke="#8eafd4"
           strokeWidth="10"
           strokeLinecap="round"
         />

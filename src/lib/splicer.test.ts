@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { memberByPin } from "./crew.server.ts";
 import { judgeAttempt, readToken, signToken } from "./session.server.ts";
-import { billingPeriod, billingWeeks, buildDayRoute, mergeNodeEdit, mineNodes, personalTotal, presentNodes, routeForDay, seedNodesList, weekBounds, type SplicerNode } from "./splicer.ts";
+import { billingPeriod, billingWeeks, buildDayRoute, mergeNodeEdit, mineNodes, personalTotal, presentNodes, routeForDay, seedNodesList, shareAmount, weekBounds, type SplicerNode } from "./splicer.ts";
 
 function sample(code: string, lat: number, lng: number, status: SplicerNode["status"] = "pending"): SplicerNode {
   return {
@@ -66,6 +66,12 @@ test("live board totals stay at 97 completed and $30,800 generated", () => {
   assert.equal(personalTotal(nodes, "Daniel"), 15400);
   assert.equal(personalTotal(nodes, "Iván"), 15400);
   assert.equal(personalTotal(nodes, "Chris"), 2700);
+  const unnamed = { ...sample("Z9A", 30, -96, "completed"), completedBy: "", billingIncluded: true };
+  assert.equal(shareAmount(unnamed, "Daniel"), 175);
+  assert.equal(shareAmount(unnamed, "Chris"), 0);
+  const offBilling = { ...sample("Z9B", 30, -96, "completed"), completedBy: "Chris", billingIncluded: false };
+  assert.equal(shareAmount(offBilling, "Daniel"), 0);
+  assert.equal(shareAmount(offBilling, "Chris"), 300);
   const added = [
     "B220A",
     "B223A",

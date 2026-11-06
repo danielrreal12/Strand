@@ -368,10 +368,10 @@ export function mineNodes(nodes: SplicerNode[], person: CrewName) {
 }
 
 export function shareAmount(node: SplicerNode, person: CrewName) {
-  if (node.status !== "completed" || !node.completedBy) return 0;
-  if (node.completedBy === "Chris") return person === "Chris" ? CHRIS_RATE : 0;
-  if (node.completedBy === "Daniel" || node.completedBy === "Iván") return person === "Chris" ? 0 : PAY_PER_NODE / 2;
-  return 0;
+  if (node.status !== "completed") return 0;
+  if (person === "Chris") return node.completedBy === "Chris" ? CHRIS_RATE : 0;
+  if (node.billingIncluded === false) return 0;
+  return PAY_PER_NODE / 2;
 }
 
 export function payableNodes(nodes: SplicerNode[], person: CrewName) {

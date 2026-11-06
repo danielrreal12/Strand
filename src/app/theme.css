@@ -852,9 +852,9 @@ html[data-theme="dark"] .week-days button.selected {
   width: 0;
   height: 2px;
   margin: 22px auto 36px;
-  background: linear-gradient(90deg, transparent, #c4622d, transparent);
+  background: linear-gradient(90deg, transparent, #8eafd4, transparent);
   animation: strand-rule 1.1s 1.1s ease forwards;
-  box-shadow: 0 0 18px #c4622d88;
+  box-shadow: 0 0 18px #6d8eb888;
 }
 
 .strand-form {
@@ -905,13 +905,13 @@ html[data-theme="dark"] .week-days button.selected {
 .strand-slots span:nth-child(4) { animation-delay: 1.45s; }
 
 .strand-slots span.filled {
-  border-color: #c4622d;
+  border-color: #8eafd4;
   background: #18263c;
 }
 
 .strand-slots span.hot {
-  border-color: #c4622d;
-  box-shadow: 0 0 0 4px #c4622d33, 0 0 24px #1b3a6388;
+  border-color: #8eafd4;
+  box-shadow: 0 0 0 4px #6d8eb833, 0 0 24px #1b3a6388;
 }
 
 .strand-pin-input {
@@ -939,12 +939,16 @@ html[data-theme="dark"] .week-days button.selected {
   padding: 16px;
   border: 0;
   border-radius: 999px;
-  background: #c4622d;
-  color: #fff7f2;
+  background: #1f4b82;
+  color: #f4f7fb;
   font: 700 15px "DM Sans", sans-serif;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   animation: strand-rise 0.7s 1.5s ease both;
+}
+
+.strand-open:hover:not(:disabled) {
+  background: #2b63a8;
 }
 
 .strand-open:disabled {
