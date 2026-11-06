@@ -38,9 +38,9 @@ export function PinGate({ onUnlock }: { onUnlock: (person: CrewName, role: CrewR
       <svg className="strand-fiber" viewBox="0 0 400 720" preserveAspectRatio="none" aria-hidden="true">
         <defs>
           <linearGradient id="strand-copper" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#7a3d18" />
-            <stop offset="0.45" stopColor="#e8b07a" />
-            <stop offset="1" stopColor="#c4622d" />
+            <stop offset="0" stopColor="#16325a" />
+            <stop offset="0.55" stopColor="#c4622d" />
+            <stop offset="1" stopColor="#8a3d18" />
           </linearGradient>
         </defs>
         <path
@@ -55,14 +55,14 @@ export function PinGate({ onUnlock }: { onUnlock: (person: CrewName, role: CrewR
           className="strand-fiber-glow"
           d="M-20 80 C 80 40, 120 180, 210 150 S 330 80, 430 140 C 380 260, 40 250, 30 380 S 360 470, 420 560 C 280 640, 80 600, -20 700"
           fill="none"
-          stroke="#e8b07a"
+          stroke="#c4622d"
           strokeWidth="10"
           strokeLinecap="round"
         />
       </svg>
 
       <main className="strand-gate-main">
-        <p className="strand-kicker">Optimum Fiber</p>
+        <p className="strand-kicker">Optimum · Paige</p>
         <h1 className="strand-mark" aria-label="Strand">
           {"STRAND".split("").map((letter, index) => (
             <span key={letter} style={{ animationDelay: `${0.35 + index * 0.12}s` }}>
