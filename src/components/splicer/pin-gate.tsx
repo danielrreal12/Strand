@@ -33,36 +33,82 @@ export function PinGate({ onUnlock }: { onUnlock: (person: CrewName, role: CrewR
   }
 
   return (
-    <div className="pin-screen">
-      <main className="pin-card">
-        <small>OPTIMUM · PAIGE</small>
-        <h1>Welcome to Strand</h1>
-        <p>Enter your access code. Today’s route opens first.</p>
-        <form onSubmit={submit}>
-          <label htmlFor="pin">Access code</label>
-          <input
-            id="pin"
-            name="pin"
-            type="password"
-            inputMode="numeric"
-            pattern="[0-9]{4}"
-            minLength={4}
-            maxLength={4}
-            autoComplete="current-password"
-            required
-            autoFocus
-            aria-describedby="pin-error"
-            value={pin}
-            onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 4))}
-          />
-          <p id="pin-error" className="error" role="alert">
+    <div className="strand-gate">
+      <div className="strand-gate-glow" aria-hidden="true" />
+      <svg className="strand-fiber" viewBox="0 0 400 720" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="strand-copper" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#7a3d18" />
+            <stop offset="0.45" stopColor="#e8b07a" />
+            <stop offset="1" stopColor="#c4622d" />
+          </linearGradient>
+        </defs>
+        <path
+          className="strand-fiber-line"
+          d="M-20 80 C 80 40, 120 180, 210 150 S 330 80, 430 140 C 380 260, 40 250, 30 380 S 360 470, 420 560 C 280 640, 80 600, -20 700"
+          fill="none"
+          stroke="url(#strand-copper)"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+        <path
+          className="strand-fiber-glow"
+          d="M-20 80 C 80 40, 120 180, 210 150 S 330 80, 430 140 C 380 260, 40 250, 30 380 S 360 470, 420 560 C 280 640, 80 600, -20 700"
+          fill="none"
+          stroke="#e8b07a"
+          strokeWidth="10"
+          strokeLinecap="round"
+        />
+      </svg>
+
+      <main className="strand-gate-main">
+        <p className="strand-kicker">Optimum Fiber</p>
+        <h1 className="strand-mark" aria-label="Strand">
+          {"STRAND".split("").map((letter, index) => (
+            <span key={letter} style={{ animationDelay: `${0.35 + index * 0.12}s` }}>
+              {letter}
+            </span>
+          ))}
+        </h1>
+        <div className="strand-rule" aria-hidden="true" />
+
+        <form className="strand-form" onSubmit={submit}>
+          <label htmlFor="pin" className="strand-visually-hidden">
+            Four-digit code
+          </label>
+          <div className="strand-pin-wrap">
+            <div className="strand-slots" aria-hidden="true">
+              {[0, 1, 2, 3].map((index) => (
+                <span key={index} className={pin.length === index ? "hot" : pin.length > index ? "filled" : ""}>
+                  {pin[index] ? "•" : ""}
+                </span>
+              ))}
+            </div>
+            <input
+              id="pin"
+              name="pin"
+              className="strand-pin-input"
+              type="password"
+              inputMode="numeric"
+              pattern="[0-9]{4}"
+              minLength={4}
+              maxLength={4}
+              autoComplete="current-password"
+              required
+              autoFocus
+              aria-describedby="pin-error"
+              value={pin}
+              onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 4))}
+            />
+          </div>
+          <p id="pin-error" className="strand-error" role="alert">
             {error}
           </p>
-          <button className="primary" disabled={pending}>
-            {pending ? "Checking…" : "Enter"}
+          <button className="strand-open" disabled={pending || pin.length !== 4}>
+            {pending ? "Opening…" : "Open Strand"}
           </button>
         </form>
-        <footer>This phone stays signed in for 7 days. Five wrong codes lock the sign-in for 15 minutes.</footer>
+        <p className="strand-stay">Signed in for 7 days on this phone.</p>
       </main>
     </div>
   );

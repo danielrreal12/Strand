@@ -767,3 +767,282 @@ html[data-theme="dark"] .week-days button.selected {
     background: #152033f5;
   }
 }
+
+.strand-gate {
+  min-height: 100svh;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  padding: max(28px, env(safe-area-inset-top)) 24px max(28px, env(safe-area-inset-bottom));
+  background: #070d18;
+  color: #f3efe8;
+}
+
+.strand-gate-glow {
+  position: absolute;
+  inset: -20% -30% auto;
+  height: 70%;
+  background: radial-gradient(ellipse at 50% 0%, #c4622d55, transparent 62%);
+  animation: strand-breathe 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.strand-fiber {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.strand-fiber-line {
+  stroke-dasharray: 1400;
+  stroke-dashoffset: 1400;
+  animation: strand-draw 2.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.strand-fiber-glow {
+  opacity: 0.18;
+  filter: blur(6px);
+  stroke-dasharray: 1400;
+  stroke-dashoffset: 1400;
+  animation: strand-draw 2.4s cubic-bezier(0.4, 0, 0.2, 1) forwards, strand-pulse 3.2s 2.2s ease-in-out infinite;
+}
+
+.strand-gate-main {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 420px);
+  text-align: center;
+}
+
+.strand-kicker {
+  margin: 0 0 18px;
+  color: #c9b09a;
+  letter-spacing: 0.46em;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  animation: strand-rise 0.7s ease both;
+}
+
+.strand-mark {
+  display: flex;
+  justify-content: center;
+  gap: 0.02em;
+  margin: 0;
+  font-family: Manrope, sans-serif;
+  font-size: clamp(56px, 18vw, 92px);
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  line-height: 0.85;
+}
+
+.strand-mark span {
+  display: inline-block;
+  background: linear-gradient(180deg, #fff6ea 10%, #e8b07a 55%, #c4622d 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  opacity: 0;
+  transform: translateY(28px) rotate(-6deg);
+  animation: strand-letter 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.strand-rule {
+  width: 0;
+  height: 2px;
+  margin: 22px auto 36px;
+  background: linear-gradient(90deg, transparent, #e8b07a, #c4622d, transparent);
+  animation: strand-rule 1.1s 1.1s ease forwards;
+  box-shadow: 0 0 18px #c4622d88;
+}
+
+.strand-form {
+  display: grid;
+  gap: 14px;
+}
+
+.strand-pin-wrap {
+  position: relative;
+}
+
+.strand-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.strand-slots {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  pointer-events: none;
+}
+
+.strand-slots span {
+  height: 64px;
+  border: 1px solid #3a2a1f;
+  border-radius: 14px;
+  background: #100b08cc;
+  color: #e8b07a;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  letter-spacing: 0;
+  box-shadow: inset 0 0 0 1px #ffffff08;
+  animation: strand-rise 0.6s ease both;
+}
+
+.strand-slots span:nth-child(1) { animation-delay: 1.15s; }
+.strand-slots span:nth-child(2) { animation-delay: 1.25s; }
+.strand-slots span:nth-child(3) { animation-delay: 1.35s; }
+.strand-slots span:nth-child(4) { animation-delay: 1.45s; }
+
+.strand-slots span.filled {
+  border-color: #c4622d;
+  background: #1c120c;
+}
+
+.strand-slots span.hot {
+  border-color: #e8b07a;
+  box-shadow: 0 0 0 4px #c4622d33, 0 0 24px #c4622d55;
+}
+
+.strand-pin-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.02;
+  color: transparent;
+  caret-color: transparent;
+  background: transparent;
+  border: 0;
+}
+
+.strand-error {
+  min-height: 1.2em;
+  margin: 0;
+  color: #ffb4a8;
+  font-size: 13px;
+}
+
+.strand-open {
+  width: 100%;
+  margin-top: 4px;
+  padding: 16px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #9a4a1f, #e8b07a, #c4622d);
+  background-size: 180% 100%;
+  color: #160e08;
+  font: 700 15px "DM Sans", sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  animation: strand-rise 0.7s 1.5s ease both, strand-shimmer 4.5s 2s linear infinite;
+}
+
+.strand-open:disabled {
+  opacity: 0.45;
+  animation: strand-rise 0.7s 1.5s ease both;
+}
+
+.strand-stay {
+  margin: 22px 0 0;
+  color: #8d7d70;
+  font-size: 12px;
+  animation: strand-rise 0.7s 1.7s ease both;
+}
+
+@keyframes strand-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes strand-pulse {
+  0%,
+  100% {
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.32;
+  }
+}
+
+@keyframes strand-breathe {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(12px);
+  }
+}
+
+@keyframes strand-letter {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes strand-rule {
+  to {
+    width: min(220px, 70%);
+  }
+}
+
+@keyframes strand-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes strand-shimmer {
+  0% {
+    background-position: 0 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .strand-gate-glow,
+  .strand-fiber-line,
+  .strand-fiber-glow,
+  .strand-mark span,
+  .strand-rule,
+  .strand-slots span,
+  .strand-kicker,
+  .strand-open,
+  .strand-stay {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    stroke-dashoffset: 0;
+  }
+
+  .strand-rule {
+    width: min(220px, 70%);
+  }
+}
