@@ -87,7 +87,7 @@ export function NodesView() {
                       {node.code}
                       <ExternalLink size={13} />
                     </button>
-                    <small className="sub">{node.job || "Optimum Fiber"}</small>
+                    <small className="sub">{node.job || "Optimum • Paige"}</small>
                     <NodeNotices node={node} />
                   </td>
                   <td>
