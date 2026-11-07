@@ -96,7 +96,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <Radio size={19} />
           </span>
           <div>
-            <strong>Optimum Fiber</strong>
+            <strong>Optimum • Paige</strong>
             <small>Paige Communications</small>
           </div>
           <span className="live-dot" />
@@ -141,7 +141,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <div>
             <span className="breadcrumb">Workspace</span>
             <ChevronRight size={14} />
-            <strong>Optimum Fiber</strong>
+            <strong>Optimum • Paige</strong>
           </div>
           <span className="sync">
             <span className="live-dot" /> Saved and backed up
@@ -159,7 +159,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <main>
           <div className="heading">
             <div>
-              <div className="eyebrow">STRAND · OPTIMUM FIBER</div>
+              <div className="eyebrow">STRAND · OPTIMUM • PAIGE</div>
               <h1>{title}</h1>
               <p>{subtitle}</p>
             </div>
