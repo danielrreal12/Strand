@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { memberByPin } from "./crew.server.ts";
 import { judgeAttempt, readToken, signToken } from "./session.server.ts";
-import { billingPeriod, billingWeeks, buildDayRoute, completedBetween, csvFor, mergeNodeEdit, mineNodes, payrollWeek, personalTotal, presentNodes, routeForDay, seedNodesList, shareAmount, weekBounds, type SplicerNode } from "./splicer.ts";
+import { billingPeriod, billingWeeks, buildDayRoute, completedBetween, csvFor, expectedPayDate, expectedPayNodes, mergeNodeEdit, mineNodes, payrollWeek, personalTotal, presentNodes, routeForDay, seedNodesList, shareAmount, weekBounds, type SplicerNode } from "./splicer.ts";
 
 function sample(code: string, lat: number, lng: number, status: SplicerNode["status"] = "pending"): SplicerNode {
   return {
@@ -53,6 +53,22 @@ test("weekly pay covers the Friday–Thursday cycle paid two weeks out", () => {
   const payable = completedBetween(nodes, period.start, period.end);
   assert.deepEqual(payable.map((node) => node.completed), ["2026-10-30", "2026-11-05"]);
   assert.equal(personalTotal(payable, "Daniel"), 350);
+});
+
+test("expected weekly pay honors saved dates and excludes received payments", () => {
+  const base = { ...sample("BASE", 30, -96, "completed"), completed: "2026-10-16", completedBy: "Daniel" as const };
+  const earlier = { ...base, code: "EARLIER", payDate: "2026-10-30" };
+  const scheduled = { ...base, code: "SCHEDULED", payDate: "2026-11-06" };
+  const estimated = { ...base, code: "ESTIMATED", completed: "2026-10-20", payDate: "" };
+  const received = { ...scheduled, code: "RECEIVED", paidDate: "2026-11-06" };
+  const chris = { ...scheduled, code: "CHRIS", completedBy: "Chris" as const };
+  assert.equal(expectedPayDate(earlier), "2026-10-30");
+  assert.equal(expectedPayDate(estimated), "2026-11-06");
+  assert.equal(expectedPayDate({ ...base, completed: "2026-11-05", payDate: "" }), "2026-11-20");
+  const selected = expectedPayNodes([earlier, scheduled, estimated, received, chris], "2026-11-07", "Daniel");
+  assert.deepEqual(selected.map((node) => node.code), ["SCHEDULED", "ESTIMATED"]);
+  assert.equal(personalTotal(selected, "Daniel"), 350);
+  assert.deepEqual(expectedPayNodes([scheduled], "2026-11-13", "Daniel"), []);
 });
 
 test("Chris's completions never enter Daniel and Iván's shared billing", () => {

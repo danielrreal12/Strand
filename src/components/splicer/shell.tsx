@@ -26,10 +26,10 @@ import {
   completedBetween,
   crewById,
   downloadCsv,
+  expectedPayNodes,
   formatShort,
   money,
   payableNodes,
-  payrollWeek,
   personalTotal,
   weekBounds,
   type TabId,
@@ -65,8 +65,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const progress = active.length ? (completed.length / active.length) * 100 : 0;
   const bounds = weekBounds(splicer.today);
   const weekDone = completedBetween(splicer.nodes, bounds.start, bounds.end);
-  const payWeek = payrollWeek(splicer.today);
-  const payableThisWeek = completedBetween(splicer.nodes, payWeek.start, payWeek.end);
+  const payableThisWeek = expectedPayNodes(splicer.nodes, splicer.today, splicer.person);
+  const estimatedPayDates = payableThisWeek.filter((node) => !node.payDate).length;
   const weekLabel = `${formatShort(bounds.start)}–${formatShort(bounds.end)}`;
   const titles: Record<TabId, [string, string]> = {
     today: [
@@ -208,14 +208,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </div>
             <div className="stat">
               <span>
-                Your pay this week
+                Expected pay this week
                 <Clock size={18} />
               </span>
               <strong>
                 {money(personalTotal(payableThisWeek, splicer.person))}
                 <em>USD</em>
               </strong>
-              <small>Payday {formatShort(payWeek.payDate)} · Work completed {formatShort(payWeek.start)}–{formatShort(payWeek.end)}. Friday–Thursday cycle, paid two weeks out.</small>
+              <small>{formatShort(bounds.start)}–{formatShort(bounds.end)} · {payableThisWeek.length} unpaid nodes scheduled. {estimatedPayDates ? `${estimatedPayDates} use estimated payment dates.` : "Based on scheduled payment dates."}</small>
             </div>
             <div className="stat green">
               <span>

@@ -318,6 +318,19 @@ export function payrollWeek(iso: string) {
   return { start: addDays(payDate, -21), end: addDays(payDate, -15), payDate };
 }
 
+export function expectedPayDate(node: SplicerNode) {
+  if (node.status !== "completed") return "";
+  return node.payDate || (node.completed ? billingPeriod(node.completed).payDate : "");
+}
+
+export function expectedPayNodes(nodes: SplicerNode[], today: string, person: CrewName) {
+  const week = weekBounds(today);
+  return payableNodes(nodes, person).filter((node) => {
+    const date = expectedPayDate(node);
+    return !node.paidDate && date >= week.start && date <= week.end;
+  });
+}
+
 export function completedBetween(nodes: SplicerNode[], start: string, end: string) {
   return activeNodes(nodes).filter((node) => node.status === "completed" && node.completed >= start && node.completed <= end);
 }
