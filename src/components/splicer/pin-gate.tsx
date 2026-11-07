@@ -62,7 +62,7 @@ export function PinGate({ onUnlock }: { onUnlock: (person: CrewName, role: CrewR
       </svg>
 
       <main className="strand-gate-main">
-        <p className="strand-kicker">Optimum · Paige</p>
+        <p className="strand-kicker">Optimum • Paige</p>
         <h1 className="strand-mark" aria-label="Strand">
           {"STRAND".split("").map((letter, index) => (
             <span key={letter} style={{ animationDelay: `${0.35 + index * 0.12}s` }}>
