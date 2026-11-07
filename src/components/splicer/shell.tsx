@@ -29,6 +29,7 @@ import {
   formatShort,
   money,
   payableNodes,
+  payrollWeek,
   personalTotal,
   weekBounds,
   type TabId,
@@ -64,6 +65,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const progress = active.length ? (completed.length / active.length) * 100 : 0;
   const bounds = weekBounds(splicer.today);
   const weekDone = completedBetween(splicer.nodes, bounds.start, bounds.end);
+  const payWeek = payrollWeek(splicer.today);
+  const payableThisWeek = completedBetween(splicer.nodes, payWeek.start, payWeek.end);
   const weekLabel = `${formatShort(bounds.start)}–${formatShort(bounds.end)}`;
   const titles: Record<TabId, [string, string]> = {
     today: [
@@ -209,10 +212,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <Clock size={18} />
               </span>
               <strong>
-                {money(personalTotal(weekDone, splicer.person))}
+                {money(personalTotal(payableThisWeek, splicer.person))}
                 <em>USD</em>
               </strong>
-              <small>{weekLabel}. Friday through Thursday, separate from all-time pay.</small>
+              <small>Payday {formatShort(payWeek.payDate)} · Work completed {formatShort(payWeek.start)}–{formatShort(payWeek.end)}. Friday–Thursday cycle, paid two weeks out.</small>
             </div>
             <div className="stat green">
               <span>

@@ -313,6 +313,11 @@ export function weekBounds(iso: string) {
   return { start, end: addDays(start, 6) };
 }
 
+export function payrollWeek(iso: string) {
+  const { start: payDate } = weekBounds(iso);
+  return { start: addDays(payDate, -21), end: addDays(payDate, -15), payDate };
+}
+
 export function completedBetween(nodes: SplicerNode[], start: string, end: string) {
   return activeNodes(nodes).filter((node) => node.status === "completed" && node.completed >= start && node.completed <= end);
 }

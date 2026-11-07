@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { memberByPin } from "./crew.server.ts";
 import { judgeAttempt, readToken, signToken } from "./session.server.ts";
-import { billingPeriod, billingWeeks, buildDayRoute, mergeNodeEdit, mineNodes, personalTotal, presentNodes, routeForDay, seedNodesList, shareAmount, weekBounds, type SplicerNode } from "./splicer.ts";
+import { billingPeriod, billingWeeks, buildDayRoute, completedBetween, mergeNodeEdit, mineNodes, payrollWeek, personalTotal, presentNodes, routeForDay, seedNodesList, shareAmount, weekBounds, type SplicerNode } from "./splicer.ts";
 
 function sample(code: string, lat: number, lng: number, status: SplicerNode["status"] = "pending"): SplicerNode {
   return {
@@ -38,6 +38,21 @@ test("billing periods match the Optimum cuts", () => {
   assert.equal(friday.end, "2026-10-29");
   assert.equal(friday.payDate, "2026-11-13");
   assert.equal(billingPeriod("2026-10-30").payDate, "2026-11-20");
+});
+
+test("weekly pay covers the Friday–Thursday cycle paid two weeks out", () => {
+  for (const today of ["2026-11-20", "2026-11-21", "2026-11-26"]) {
+    assert.deepEqual(payrollWeek(today), { start: "2026-10-30", end: "2026-11-05", payDate: "2026-11-20" });
+  }
+  assert.equal(payrollWeek("2026-11-27").start, "2026-11-06");
+  assert.equal(payrollWeek("2026-11-19").payDate, "2026-11-13");
+  const nodes = ["2026-10-29", "2026-10-30", "2026-11-05", "2026-11-06"].map((completed, index) => ({
+    ...sample(`PAY${index}`, 30, -96, "completed"), completed, completedBy: "Daniel" as const,
+  }));
+  const period = payrollWeek("2026-11-20");
+  const payable = completedBetween(nodes, period.start, period.end);
+  assert.deepEqual(payable.map((node) => node.completed), ["2026-10-30", "2026-11-05"]);
+  assert.equal(personalTotal(payable, "Daniel"), 350);
 });
 
 test("live board totals stay at 97 completed and $30,800 generated", () => {
