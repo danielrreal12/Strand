@@ -375,7 +375,7 @@ export function mineNodes(nodes: SplicerNode[], person: CrewName) {
 export function shareAmount(node: SplicerNode, person: CrewName) {
   if (node.status !== "completed") return 0;
   if (person === "Chris") return node.completedBy === "Chris" ? CHRIS_RATE : 0;
-  if (node.billingIncluded === false) return 0;
+  if (node.completedBy === "Chris" || node.billingIncluded === false) return 0;
   return PAY_PER_NODE / 2;
 }
 
@@ -464,7 +464,7 @@ export function csvFor(nodes: SplicerNode[], viewer?: CrewName) {
       node.completed,
       node.payDate,
       node.paidDate,
-      viewer && shareAmount(node, viewer) ? String(shareAmount(node, viewer)) : node.status === "completed" && billable(node) ? "350" : "0",
+      viewer ? String(shareAmount(node, viewer)) : node.status === "completed" && billable(node) ? "350" : "0",
       node.invoice,
       node.job,
       node.gps,

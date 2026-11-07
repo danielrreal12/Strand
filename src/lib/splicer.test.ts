@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { memberByPin } from "./crew.server.ts";
 import { judgeAttempt, readToken, signToken } from "./session.server.ts";
-import { billingPeriod, billingWeeks, buildDayRoute, completedBetween, mergeNodeEdit, mineNodes, payrollWeek, personalTotal, presentNodes, routeForDay, seedNodesList, shareAmount, weekBounds, type SplicerNode } from "./splicer.ts";
+import { billingPeriod, billingWeeks, buildDayRoute, completedBetween, csvFor, mergeNodeEdit, mineNodes, payrollWeek, personalTotal, presentNodes, routeForDay, seedNodesList, shareAmount, weekBounds, type SplicerNode } from "./splicer.ts";
 
 function sample(code: string, lat: number, lng: number, status: SplicerNode["status"] = "pending"): SplicerNode {
   return {
@@ -53,6 +53,28 @@ test("weekly pay covers the Friday–Thursday cycle paid two weeks out", () => {
   const payable = completedBetween(nodes, period.start, period.end);
   assert.deepEqual(payable.map((node) => node.completed), ["2026-10-30", "2026-11-05"]);
   assert.equal(personalTotal(payable, "Daniel"), 350);
+});
+
+test("Chris's completions never enter Daniel and Iván's shared billing", () => {
+  const chris = { ...sample("CHRIS", 30, -96, "completed"), completedBy: "Chris" as const };
+  for (const billingIncluded of [undefined, true, false]) {
+    const node = { ...chris, billingIncluded };
+    assert.equal(shareAmount(node, "Daniel"), 0);
+    assert.equal(shareAmount(node, "Iván"), 0);
+    assert.equal(shareAmount(node, "Chris"), 300);
+  }
+  assert.equal(csvFor([chris], "Daniel").split("\n")[1].split(",")[8], '"0"');
+  assert.equal(csvFor([chris], "Iván").split("\n")[1].split(",")[8], '"0"');
+  assert.equal(csvFor([chris], "Chris").split("\n")[1].split(",")[8], '"300"');
+  const daniel = { ...sample("DANIEL", 30, -96, "completed"), completedBy: "Daniel" as const };
+  const ivan = { ...sample("IVAN", 30, -96, "completed"), completedBy: "Iván" as const };
+  const nodes = [chris, daniel, ivan];
+  assert.equal(personalTotal(nodes, "Daniel"), 350);
+  assert.equal(personalTotal(nodes, "Iván"), 350);
+  assert.equal(personalTotal(nodes, "Chris"), 300);
+  const weeks = billingWeeks(nodes, "2026-11-20", "Daniel");
+  assert.equal(weeks.reduce((sum, week) => sum + week.earned, 0), 350);
+  assert.ok(weeks.every((week) => week.nodes.every((node) => node.completedBy !== "Chris")));
 });
 
 test("live board totals stay at 97 completed and $30,800 generated", () => {
