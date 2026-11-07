@@ -4,6 +4,7 @@ import path from "node:path";
 import { currentSession } from "@/lib/session.server";
 import { mapsDir } from "@/lib/paths.server";
 import { seedNodesList } from "@/lib/splicer";
+import { readStore } from "@/lib/store.server";
 
 function safeName(name: string) {
   const base = path.basename(name);
@@ -47,7 +48,8 @@ export async function GET(_request: Request, context: { params: Promise<{ file: 
   if (!(await currentSession())) return new Response("Sign in to open maps.", { status: 401 });
   const { file } = await context.params;
   const name = safeName(decodeURIComponent(file));
-  const known = new Set(seedNodesList().map((node) => node.map).filter(Boolean));
+  const store = await readStore();
+  const known = new Set([...seedNodesList(), ...(store?.nodes ?? [])].map((node) => node.map).filter(Boolean));
   if (!name || !known.has(name)) return new Response("Map not available", { status: 404 });
 
   const local = path.join(mapsDir(), name);
