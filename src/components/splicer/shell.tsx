@@ -2,6 +2,7 @@
 
 import {
   Activity,
+  BarChart3,
   ArrowUpRight,
   CalendarDays,
   ChevronRight,
@@ -43,6 +44,7 @@ const NAV: { id: TabId; label: string; icon: typeof CalendarDays }[] = [
   { id: "nodes", label: "Nodes", icon: Layers },
   { id: "routes", label: "Route", icon: MapPin },
   { id: "billing", label: "Billing", icon: Receipt },
+  { id: "stats", label: "Stats", icon: BarChart3 },
 ];
 
 const TABS: { id: TabId; label: string }[] = [
@@ -51,6 +53,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "nodes", label: "All nodes" },
   { id: "routes", label: "Map & route" },
   { id: "billing", label: "Billing & payments" },
+  { id: "stats", label: "Stats" },
 ];
 
 export function Shell({ children }: { children: React.ReactNode }) {
@@ -78,6 +81,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     calendar: ["Your work, on the calendar.", "The week is the working view. The month is there when you need it."],
     routes: ["The day, stop by stop.", "Six stops each, grouped by how close the nodes are."],
     nodes: ["Every node, in one place.", "Maps, locations, and who finished each assignment."],
+    stats: ["Production, side by side.", "Compare completed nodes for Daniel, Iván, and Chris by completion date."],
     billing: splicer.person === "Chris"
       ? [`Your billing, ${profile.name}.`, "Only the nodes finished in your name, at $300 each."]
       : [`Your billing, ${profile.name}.`, "Your half of each day you and your partner finished. Chris’s pay stays off this tab."],
@@ -179,7 +183,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               </button>
             </div>
           ) : null}
-          {splicer.tab === "today" ? null : (
+          {splicer.tab === "today" || splicer.tab === "stats" ? null : (
           <div className="stats">
             <div className="stat">
               <span>

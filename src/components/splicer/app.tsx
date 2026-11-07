@@ -11,6 +11,7 @@ import { SplicerProvider, useSplicer } from "./provider";
 import { RoutesView } from "./routes";
 import { Shell } from "./shell";
 import { TodayView } from "./today";
+import { StatsView } from "./stats";
 
 type SignedIn = { id: CrewName; role: CrewRole };
 
@@ -51,6 +52,7 @@ function Board() {
       {tab === "nodes" ? <NodesView /> : null}
       {tab === "routes" ? <RoutesView /> : null}
       {tab === "billing" ? <BillingView /> : null}
+      {tab === "stats" ? <StatsView /> : null}
       <Modals />
     </Shell>
   );

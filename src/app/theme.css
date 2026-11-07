@@ -744,7 +744,7 @@ html[data-theme="dark"] .week-days button.selected {
 @media (max-width: 650px) {
   .shell nav {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
   .shell nav button {
@@ -1034,3 +1034,6 @@ html[data-theme="dark"] .week-days button.selected {
     width: min(220px, 70%);
   }
 }
+
+/* Keep the six workspace tabs scrollable beside the export action. */
+.section-title .tabs { min-width: 0; flex: 1; overflow-x: auto; }

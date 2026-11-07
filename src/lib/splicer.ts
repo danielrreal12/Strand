@@ -13,7 +13,7 @@ export type NodeStatus = "pending" | "progress" | "completed" | "excluded";
 export type InvoiceStatus = "pending" | "sent" | "approved";
 export type ReviewStatus = "" | "review_data" | "check_reassignment";
 export type CalendarMode = "scheduled" | "start" | "due" | "completed" | "payment";
-export type TabId = "today" | "calendar" | "nodes" | "routes" | "billing";
+export type TabId = "today" | "calendar" | "nodes" | "routes" | "billing" | "stats";
 export type CrewName = "Daniel" | "Iván" | "Chris";
 export type CrewRole = "admin" | "splicer";
 

@@ -1,0 +1,38 @@
+.production-stats-root{display:grid;gap:20px;min-width:0}
+.production-stats-filters{display:flex;align-items:end;flex-wrap:wrap;gap:16px;padding:22px}
+.production-stats-filters>div{flex:1;min-width:200px}
+.production-stats-filters strong{font-size:16px}
+.production-stats-filters p,.production-stats-sectionHeading p{color:var(--muted);font-size:12px;line-height:1.7;margin:6px 0 0}
+.production-stats-filters label{display:grid;gap:7px;color:var(--muted);font-size:11px}
+.production-stats-filters select,.production-stats-filters input{background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:10px 12px;min-height:42px;font:inherit;font-size:13px}
+.production-stats-overview{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:12px}
+.production-stats-overview strong{color:var(--ink);font-size:15px}
+.production-stats-notice{padding:14px 18px;margin:0;border:1px solid var(--line);border-left:3px solid var(--copper);border-radius:8px;color:var(--ink);font-size:12px;line-height:1.7}
+.production-stats-people{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.production-stats-person{padding:24px;min-width:0}
+.production-stats-personHeading{display:flex;align-items:center;gap:12px}
+.production-stats-personHeading h2{font-size:18px;margin:0}
+.production-stats-avatar{display:grid;place-items:center;flex-shrink:0;background:var(--bg);color:var(--person-color);border:1px solid var(--line);border-radius:50%;width:40px;height:40px;font-size:12px;font-weight:700}
+.production-stats-count{display:flex;align-items:baseline;gap:10px;margin:24px 0 18px;flex-wrap:wrap}
+.production-stats-count strong{font-size:46px;line-height:1;font-weight:650;letter-spacing:-2px}
+.production-stats-count span{font-size:12px;color:var(--muted)}
+.production-stats-bar{height:9px;border-radius:8px;background:var(--bg);overflow:hidden}
+.production-stats-bar i{display:block;height:100%;background:var(--person-color);border-radius:8px}
+.production-stats-metrics{display:grid;grid-template-columns:1fr 1fr;gap:18px 12px;margin:22px 0 0}
+.production-stats-metrics dt{font-size:11px;line-height:1.5;color:var(--muted)}
+.production-stats-metrics dd{font-size:18px;font-weight:600;margin:5px 0 0}
+.production-stats-footnote{font-size:11px;color:var(--muted);margin:-6px 0 0;line-height:1.7}
+.production-stats-sectionHeading{padding:22px;border-bottom:1px solid var(--line)}
+.production-stats-sectionHeading h2{font-size:17px;margin:0}
+.production-stats-tableScroll{max-width:100%;overflow-x:auto}
+.production-stats-table{width:100%;min-width:530px;border-collapse:collapse}
+.production-stats-table th,.production-stats-table td{text-align:right;padding:14px 20px;white-space:nowrap}
+.production-stats-table th:first-child,.production-stats-table td:first-child{text-align:left}
+.production-stats-table small{display:block;font-size:10px;color:var(--muted);margin-top:5px}
+.production-stats-table tfoot th{border-top:1px solid var(--line)}
+.production-stats-details{border-bottom:1px solid var(--line)}
+.production-stats-details:last-child{border-bottom:0}
+.production-stats-details summary{padding:18px 22px;cursor:pointer;font-size:14px;font-weight:600}
+.production-stats-details summary span{float:right;font-size:12px;color:var(--muted);font-weight:400}
+@media(max-width:1000px){.production-stats-people{gap:12px}.production-stats-person{padding:18px}.production-stats-count strong{font-size:38px}}
+@media(max-width:650px){.production-stats-root{gap:14px}.production-stats-filters{padding:18px}.production-stats-filters>div{flex-basis:100%}.production-stats-filters label{flex:1;min-width:120px}.production-stats-people{grid-template-columns:1fr}.production-stats-person{padding:20px}.production-stats-count{margin:18px 0 14px}.production-stats-metrics{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.production-stats-metrics dd{font-size:15px}.production-stats-metrics dt{font-size:10px}.production-stats-sectionHeading{padding:18px}.production-stats-table th,.production-stats-table td{padding:12px 16px}.production-stats-details summary{padding:18px}}
