@@ -65,7 +65,7 @@ export function NodesView() {
               <th>DATES</th>
               <th>LOCATION</th>
               <th>MAP</th>
-              <th>VALUE</th>
+              <th>{splicer.person === "Chris" ? "NODES" : "VALUE"}</th>
             </tr>
           </thead>
           <tbody>
@@ -123,10 +123,10 @@ export function NodesView() {
                     )}
                   </td>
                   <td className="amount">
-                    {node.status === "excluded" || (splicer.person === "Chris" && node.completedBy !== "Chris")
+                    {splicer.person === "Chris" ? (node.status === "excluded" ? "—" : "1") : node.status === "excluded"
                       ? "—"
                       : node.completedBy === "Chris"
-                        ? "$300"
+                        ? "—"
                         : "$350"}
                   </td>
                 </tr>

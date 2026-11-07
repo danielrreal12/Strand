@@ -5,7 +5,6 @@ import { ExternalLink, FileText, MapPin, X } from "lucide-react";
 import { NodeNotices } from "./notices";
 import { useSplicer } from "./provider";
 import {
-  CHRIS_RATE,
   CREW_MEMBERS,
   PAY_PER_NODE,
   REVIEW_LABEL,
@@ -181,7 +180,7 @@ function NodeModal({ node }: { node: SplicerNode }) {
                 <input readOnly value={splicer.person} />
               )}
               {splicer.person === "Chris" || !admin ? null : (
-                <small>Daniel and Iván split each day’s $350 nodes in half. Chris is paid $300 for his own nodes.</small>
+                <small>Daniel and Iván split each day’s $350 nodes in half. Chris’s production is tracked separately.</small>
               )}
             </label>
             <label>
@@ -363,7 +362,7 @@ function BatchModal() {
           ) : null}
           <div className="modal-footer">
             <span>
-              {splicer.selectedCodes.length} nodes · <strong>{money(splicer.selectedCodes.length * (splicer.person === "Chris" ? CHRIS_RATE : PAY_PER_NODE))}</strong>
+              {splicer.selectedCodes.length} nodes{splicer.person !== "Chris" ? <> · <strong>{money(splicer.selectedCodes.length * PAY_PER_NODE)}</strong></> : null}
             </span>
             <button className="primary" type="submit" disabled={splicer.saving || !splicer.selectedCodes.length}>
               {splicer.saving ? "Saving…" : "Save record"}

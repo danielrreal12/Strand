@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { memberByPin } from "./crew.server.ts";
 import { judgeAttempt, readToken, signToken } from "./session.server.ts";
-import { billingPeriod, billingWeeks, buildDayRoute, completedBetween, csvFor, expectedPayDate, expectedPayNodes, mergeNodeEdit, mineNodes, payrollWeek, personalTotal, presentNodes, routeForDay, seedNodesList, shareAmount, weekBounds, type SplicerNode } from "./splicer.ts";
+import { billingPeriod, billingWeeks, buildDayRoute, completedBetween, csvFor, expectedPayDate, expectedPayNodes, mergeNodeEdit, mineNodes, payrollWeek, payableNodes, personalTotal, presentNodes, routeForDay, seedNodesList, shareAmount, weekBounds, type SplicerNode } from "./splicer.ts";
 
 function sample(code: string, lat: number, lng: number, status: SplicerNode["status"] = "pending"): SplicerNode {
   return {
@@ -77,20 +77,36 @@ test("Chris's completions never enter Daniel and Iván's shared billing", () => 
     const node = { ...chris, billingIncluded };
     assert.equal(shareAmount(node, "Daniel"), 0);
     assert.equal(shareAmount(node, "Iván"), 0);
-    assert.equal(shareAmount(node, "Chris"), 300);
+    assert.equal(shareAmount(node, "Chris"), 0);
   }
   assert.equal(csvFor([chris], "Daniel").split("\n")[1].split(",")[8], '"0"');
   assert.equal(csvFor([chris], "Iván").split("\n")[1].split(",")[8], '"0"');
-  assert.equal(csvFor([chris], "Chris").split("\n")[1].split(",")[8], '"300"');
+  assert.ok(csvFor([chris], "Chris").includes('"Node count"'));
+  assert.ok(!csvFor([chris], "Chris").includes("USD"));
   const daniel = { ...sample("DANIEL", 30, -96, "completed"), completedBy: "Daniel" as const };
   const ivan = { ...sample("IVAN", 30, -96, "completed"), completedBy: "Iván" as const };
   const nodes = [chris, daniel, ivan];
   assert.equal(personalTotal(nodes, "Daniel"), 350);
   assert.equal(personalTotal(nodes, "Iván"), 350);
-  assert.equal(personalTotal(nodes, "Chris"), 300);
+  assert.equal(personalTotal(nodes, "Chris"), 0);
   const weeks = billingWeeks(nodes, "2026-11-20", "Daniel");
   assert.equal(weeks.reduce((sum, week) => sum + week.earned, 0), 350);
   assert.ok(weeks.every((week) => week.nodes.every((node) => node.completedBy !== "Chris")));
+});
+
+test("Chris production and CSV count nodes without assuming a pay rate", () => {
+  const completed = { ...sample("C1", 30, -96, "completed"), completedBy: "Chris" as const, billingIncluded: false };
+  const pending = { ...completed, code: "C2", status: "pending" as const, completed: "" };
+  const other = { ...completed, code: "D1", completedBy: "Daniel" as const };
+  const own = payableNodes([completed, pending, other], "Chris");
+  assert.deepEqual(own.map((node) => node.code), ["C1"]);
+  assert.equal(personalTotal(own, "Chris"), 0);
+  const csv = csvFor([completed, pending, other], "Chris");
+  assert.equal(csv.split("\n").length, 2);
+  assert.ok(csv.includes('"Node count"'));
+  assert.ok(csv.includes('"C1"'));
+  assert.ok(!csv.includes('"D1"'));
+  assert.ok(!/USD|\$|Generated|Payment received/.test(csv));
 });
 
 test("live board totals stay at 97 completed and $30,800 generated", () => {
@@ -118,13 +134,13 @@ test("live board totals stay at 97 completed and $30,800 generated", () => {
   assert.equal(nodes.find((node) => node.code === "B210A")?.completed, "2026-10-30");
   assert.equal(personalTotal(nodes, "Daniel"), 15400);
   assert.equal(personalTotal(nodes, "Iván"), 15400);
-  assert.equal(personalTotal(nodes, "Chris"), 2700);
+  assert.equal(personalTotal(nodes, "Chris"), 0);
   const unnamed = { ...sample("Z9A", 30, -96, "completed"), completedBy: "", billingIncluded: true };
   assert.equal(shareAmount(unnamed, "Daniel"), 175);
   assert.equal(shareAmount(unnamed, "Chris"), 0);
   const offBilling = { ...sample("Z9B", 30, -96, "completed"), completedBy: "Chris", billingIncluded: false };
   assert.equal(shareAmount(offBilling, "Daniel"), 0);
-  assert.equal(shareAmount(offBilling, "Chris"), 300);
+  assert.equal(shareAmount(offBilling, "Chris"), 0);
   const added = [
     "B220A",
     "B223A",

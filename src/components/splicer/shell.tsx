@@ -22,7 +22,6 @@ import {
   X,
 } from "lucide-react";
 import {
-  CHRIS_RATE,
   activeNodes,
   completedBetween,
   crewById,
@@ -83,7 +82,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     nodes: ["Every node, in one place.", "Maps, locations, and who finished each assignment."],
     stats: ["Production, side by side.", "Compare completed nodes for Daniel, Iván, and Chris by completion date."],
     billing: splicer.person === "Chris"
-      ? [`Your billing, ${profile.name}.`, "Only the nodes finished in your name, at $300 each."]
+      ? [`Your production, ${profile.name}.`, "Your completed nodes, grouped by completion date."]
       : [`Your billing, ${profile.name}.`, "Your half of each day you and your partner finished. Chris’s pay stays off this tab."],
   };
   const [title, subtitle] = titles[splicer.tab];
@@ -115,7 +114,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             return (
               <button key={item.id} className={splicer.tab === item.id ? "nav-active" : ""} onClick={() => splicer.setTab(item.id)}>
                 <Icon size={19} />
-                {item.label}
+                {item.id === "billing" && !partner ? "Production" : item.label}
                 {item.id === "nodes" ? <span>{active.length}</span> : null}
               </button>
             );
@@ -212,27 +211,26 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </div>
             <div className="stat">
               <span>
-                Expected pay this week
+                {partner ? "Expected pay this week" : "Your nodes this week"}
                 <Clock size={18} />
               </span>
               <strong>
-                {money(personalTotal(payableThisWeek, splicer.person))}
-                <em>USD</em>
+                {partner ? money(personalTotal(payableThisWeek, splicer.person)) : weekDone.filter((node) => node.completedBy === "Chris").length}
+                <em>{partner ? "USD" : "nodes"}</em>
               </strong>
-              <small>{formatShort(bounds.start)}–{formatShort(bounds.end)} · {payableThisWeek.length} unpaid nodes scheduled. {estimatedPayDates ? `${estimatedPayDates} use estimated payment dates.` : "Based on scheduled payment dates."}</small>
+              <small>{partner ? <>{formatShort(bounds.start)}–{formatShort(bounds.end)} · {payableThisWeek.length} unpaid nodes scheduled. {estimatedPayDates ? `${estimatedPayDates} use estimated payment dates.` : "Based on scheduled payment dates."}</> : <>{weekLabel} · Completed in your name.</>}</small>
             </div>
             <div className="stat green">
               <span>
-                Your pay, all time
+                {partner ? "Your pay, all time" : "Your nodes, all time"}
                 <Wallet size={18} />
               </span>
               <strong>
-                {money(personalTotal(splicer.nodes, splicer.person))}
-                <em>USD</em>
+                {partner ? money(personalTotal(splicer.nodes, splicer.person)) : mine.length}
+                <em>{partner ? "USD" : "nodes"}</em>
               </strong>
               <small>
-                {money(personalTotal(splicer.nodes, splicer.person, false))} still to collect · {paid.length} paid
-                {partner ? "" : ` · ${mine.length} nodes × $${CHRIS_RATE}`}
+                {partner ? <>{money(personalTotal(splicer.nodes, splicer.person, false))} still to collect · {paid.length} paid</> : "Your recorded completions across all dates."}
               </small>
             </div>
           </div>
@@ -242,7 +240,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <div className="tabs">
               {TABS.map((item) => (
                 <button key={item.id} className={splicer.tab === item.id ? "current" : ""} onClick={() => splicer.setTab(item.id)}>
-                  {item.label}
+                  {item.id === "billing" && !partner ? "Your production" : item.label}
                 </button>
               ))}
             </div>
@@ -255,7 +253,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <span>
               <Radio size={14} /> {active.length} active nodes · {active.filter((node) => node.map).length} maps available · Bryan / College Station, TX
             </span>
-            <span>Payments are confirmed manually.</span>
+            <span>{partner ? "Payments are confirmed manually." : "Production counts come from recorded completions."}</span>
           </div>
         </main>
       </div>

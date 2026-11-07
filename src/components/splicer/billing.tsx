@@ -2,8 +2,8 @@
 
 import { ArrowUpRight, Wallet } from "lucide-react";
 import { useSplicer } from "./provider";
+import { PersonalProductionView } from "./personal-production";
 import {
-  CHRIS_RATE,
   PAY_PER_NODE,
   STATUS_LABEL,
   billingWeeks,
@@ -15,6 +15,11 @@ import {
 } from "@/lib/splicer";
 
 export function BillingView() {
+  const { person } = useSplicer();
+  return person === "Chris" ? <PersonalProductionView /> : <PartnerBillingView />;
+}
+
+function PartnerBillingView() {
   const splicer = useSplicer();
   const profile = crewById(splicer.person);
   const partner = splicer.person !== "Chris";
@@ -98,13 +103,13 @@ export function BillingView() {
         <div className="panel-heading">
           <div>
             <h2>Your billing by week</h2>
-            <p>{partner ? `${profile.name} · half of each day’s $350 nodes with ${splicer.person === "Daniel" ? "Iván" : "Daniel"}` : `${profile.name} · $${CHRIS_RATE} USD / node`}</p>
+            <p>{profile.name} · half of each day’s $350 nodes with {splicer.person === "Daniel" ? "Iván" : "Daniel"}</p>
           </div>
         </div>
         <p className="production-rule">
           {partner
-            ? `This is your half of the company week. The other board shows the full $350 total for you and ${splicer.person === "Daniel" ? "Iván" : "Daniel"}; this tab is your $175. Chris’s $300 stays on his code. A billing week runs Friday through Thursday.`
-            : "This tab lists only the nodes finished in your name, at $300 each. A billing week runs Friday through Thursday."}
+            ? `This is your half of the company week. The other board shows the full $350 total for you and ${splicer.person === "Daniel" ? "Iván" : "Daniel"}; this tab is your $175. Chris’s nodes stay separate. A billing week runs Friday through Thursday.`
+            : "Production is counted by completion date."}
         </p>
         <div className="table-scroll">
           <table>
@@ -280,12 +285,12 @@ export function BillingView() {
         <div className="rate">
           <span>{partner ? "Your half per node" : "Your rate per node"}</span>
           <strong>
-            ${partner ? PAY_PER_NODE / 2 : CHRIS_RATE} <small>USD</small>
+            ${PAY_PER_NODE / 2} <small>USD</small>
           </strong>
           <p>
             {partner
               ? `Every node you or ${splicer.person === "Daniel" ? "Iván" : "Daniel"} finish is $350. That day’s total is split in half, so each node on this page is your $175.`
-              : "Each node with your name on it pays $300."}
+              : "Your production is tracked by completed node count."}
           </p>
         </div>
       </section>
@@ -293,7 +298,7 @@ export function BillingView() {
         <div className="panel-heading">
           <div>
             <h2>Your billing detail</h2>
-            <p>Your work, invoice, and pay. Other people's totals stay hidden.</p>
+            <p>Your work, invoice, and pay. Other people’s totals stay hidden.</p>
           </div>
         </div>
         <div className="table-scroll">

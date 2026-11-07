@@ -1,7 +1,6 @@
 import seedNodes from "@/data/nodes.json";
 
 export const PAY_PER_NODE = 350;
-export const CHRIS_RATE = 300;
 export const NODES_KEY = "splicer-nodes-v3";
 export const STOPS_PER_DAY = 6;
 export const SESSION_KEY = "splicer-session";
@@ -190,7 +189,7 @@ export function billingWeeks(nodes: SplicerNode[], today: string, viewer?: CrewN
   for (const node of nodes) {
     if (node.status !== "completed" || !node.completed) continue;
     if (viewer) {
-      if (shareAmount(node, viewer) > 0) ensure(node.completed).nodes.push(node);
+      if (viewer === "Chris" ? node.completedBy === "Chris" : shareAmount(node, viewer) > 0) ensure(node.completed).nodes.push(node);
       continue;
     }
     if (node.billingIncluded !== false) ensure(node.completed).nodes.push(node);
@@ -387,12 +386,14 @@ export function mineNodes(nodes: SplicerNode[], person: CrewName) {
 
 export function shareAmount(node: SplicerNode, person: CrewName) {
   if (node.status !== "completed") return 0;
-  if (person === "Chris") return node.completedBy === "Chris" ? CHRIS_RATE : 0;
+  // Chris's rate is unknown; his profile tracks production counts only.
+  if (person === "Chris") return 0;
   if (node.completedBy === "Chris" || node.billingIncluded === false) return 0;
   return PAY_PER_NODE / 2;
 }
 
 export function payableNodes(nodes: SplicerNode[], person: CrewName) {
+  if (person === "Chris") return nodes.filter((node) => node.status === "completed" && node.completedBy === "Chris");
   return nodes.filter((node) => shareAmount(node, person) > 0);
 }
 
@@ -446,6 +447,11 @@ export function clearSession() {
 }
 
 export function csvFor(nodes: SplicerNode[], viewer?: CrewName) {
+  if (viewer === "Chris") {
+    const header = ["Node", "Status", "Authorized start", "Due date", "Completed", "Wise job", "Completed by", "Node count"];
+    const rows = payableNodes(nodes, "Chris").map((node) => [node.code, STATUS_LABEL[node.status], node.start, node.due, node.completed, node.job, "Chris", "1"]);
+    return `\uFEFF${[header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n")}`;
+  }
   const header = [
     "Node",
     "Status",
