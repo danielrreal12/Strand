@@ -21,10 +21,14 @@ import {
   type CalendarMode,
   type CrewName,
   type CrewRole,
+  type CyclePayments,
+  type CyclePayment,
   type RoutePlan,
   type SplicerNode,
   type TabId,
 } from "@/lib/splicer";
+
+import { readPreferences, writePreferences, normalizePreferences, type Preferences } from "@/lib/preferences";
 
 type BatchMode = "complete" | "schedule" | "payment" | "received";
 
@@ -67,12 +71,16 @@ type SplicerState = {
   setError: (value: string) => void;
   toast: string;
   showToast: (value: string) => void;
+  preferences: Preferences;
+  updatePreferences: (changes: Partial<Preferences>) => void;
   dark: boolean;
   toggleTheme: () => void;
   saveChanges: (codes: string[], changes: Partial<SplicerNode>) => void;
+  cyclePayments: CyclePayments;
+  saveCyclePayment: (person: "Daniel" | "Iván", start: string, payment: CyclePayment) => Promise<boolean>;
   routePlans: Record<string, RoutePlan>;
   saveRoute: (plan: RoutePlan) => void;
-  replaceRecords: (nodes: SplicerNode[], routes: Record<string, RoutePlan>) => void;
+  replaceRecords: (nodes: SplicerNode[], routes: Record<string, RoutePlan>, cyclePayments?: CyclePayments) => void;
   routeMode: "team" | "individual";
   setRouteMode: (mode: "team" | "individual") => void;
   lock: () => void;
@@ -90,7 +98,8 @@ export function useSplicer() {
 export function SplicerProvider({ person, role, children, onLock }: { person: CrewName; role: CrewRole; children: ReactNode; onLock: () => void }) {
   const [nodes, setNodes] = useState<SplicerNode[]>(() => readStoredNodes());
   const [today, setToday] = useState(() => chicagoToday());
-  const [tab, setTab] = useState<TabId>("today");
+  const [preferences, setPreferences] = useState<Preferences>(() => readPreferences(person));
+  const [tab, setTab] = useState<TabId>(() => readPreferences(person).defaultTab);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [calendarMode, setCalendarMode] = useState<CalendarMode>("scheduled");
@@ -107,6 +116,7 @@ export function SplicerProvider({ person, role, children, onLock }: { person: Cr
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const [dark, setDark] = useState(false);
+  const [cyclePayments, setCyclePayments] = useState<CyclePayments>({});
   const [routePlans, setRoutePlans] = useState<Record<string, RoutePlan>>(() => readRoutePlans());
   const [routeMode, setRouteMode] = useState<"team" | "individual">("team");
   const followedAnchor = useRef("");
@@ -114,9 +124,9 @@ export function SplicerProvider({ person, role, children, onLock }: { person: Cr
   const revisionRef = useRef<string | null>(null);
   const saveSeq = useRef(0);
   const syncRef = useRef<
-    (nodes: SplicerNode[], routes: Record<string, RoutePlan>) => Promise<{ conflict?: boolean; updatedAt?: string | null; nodes?: SplicerNode[]; routes?: Record<string, RoutePlan> }>
+    (nodes: SplicerNode[], routes: Record<string, RoutePlan>) => Promise<{ conflict?: boolean; updatedAt?: string | null; nodes?: SplicerNode[]; routes?: Record<string, RoutePlan>; cyclePayments?: CyclePayments }>
   >(async () => ({}));
-  const applyRef = useRef<(data: { nodes?: SplicerNode[]; routes?: Record<string, RoutePlan> }) => void>(() => undefined);
+  const applyRef = useRef<(data: { nodes?: SplicerNode[]; routes?: Record<string, RoutePlan>; cyclePayments?: CyclePayments }) => void>(() => undefined);
   const lockRef = useRef(onLock);
 
   const anchor = useMemo(() => agendaAnchor(nodes, today), [nodes, today]);
@@ -148,16 +158,33 @@ export function SplicerProvider({ person, role, children, onLock }: { person: Cr
     window.setTimeout(() => setToast(""), 3500);
   }, []);
 
-  const toggleTheme = useCallback(() => {
-    setDark((current) => {
-      const next = !current;
-      document.documentElement.dataset.theme = next ? "dark" : "light";
-      localStorage.setItem("splicer-theme", next ? "dark" : "light");
+  const updatePreferences = useCallback((changes: Partial<Preferences>) => {
+    setPreferences((current) => {
+      const next = normalizePreferences({ ...current, ...changes });
+      writePreferences(person, next);
       return next;
     });
-  }, []);
+  }, [person]);
 
-  const applyRemote = useCallback((data: { nodes?: SplicerNode[]; routes?: Record<string, RoutePlan> }) => {
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const apply = () => {
+      const isDark = preferences.theme === "dark" || (preferences.theme === "system" && media.matches);
+      document.documentElement.dataset.theme = isDark ? "dark" : "light";
+      document.documentElement.dataset.accent = preferences.accent;
+      document.documentElement.dataset.density = preferences.density;
+      localStorage.setItem("splicer-theme", isDark ? "dark" : "light");
+      setDark(isDark);
+    };
+    apply();
+    media.addEventListener("change", apply);
+    return () => media.removeEventListener("change", apply);
+  }, [preferences]);
+
+  const toggleTheme = useCallback(() => updatePreferences({ theme: dark ? "light" : "dark" }), [dark, updatePreferences]);
+
+  const applyRemote = useCallback((data: { nodes?: SplicerNode[]; routes?: Record<string, RoutePlan>; cyclePayments?: CyclePayments }) => {
+    if (data.cyclePayments !== undefined) setCyclePayments(data.cyclePayments);
     if (data.nodes?.length) {
       setNodes(data.nodes);
       writeStoredNodes(data.nodes);
@@ -185,7 +212,7 @@ export function SplicerProvider({ person, role, children, onLock }: { person: Cr
         error?: string;
         updatedAt?: string | null;
         nodes?: SplicerNode[];
-        routes?: Record<string, RoutePlan>;
+        routes?: Record<string, RoutePlan>; cyclePayments?: CyclePayments;
       };
       if (response.status === 409) {
         if (data.updatedAt) revisionRef.current = data.updatedAt;
@@ -208,7 +235,7 @@ export function SplicerProvider({ person, role, children, onLock }: { person: Cr
     const seq = saveSeq.current;
     const localNodes = readStoredNodes();
     const localRoutes = readRoutePlans();
-    void fetch("/api/records")
+    void fetch("/api/records", { cache: "no-store" })
       .then(async (response) => {
         if (saveSeq.current !== seq) return;
         if (response.status === 401) {
@@ -216,7 +243,7 @@ export function SplicerProvider({ person, role, children, onLock }: { person: Cr
           return;
         }
         if (!response.ok) return;
-        const data = (await response.json()) as { updatedAt?: string | null; nodes?: SplicerNode[]; routes?: Record<string, RoutePlan> };
+        const data = (await response.json()) as { updatedAt?: string | null; nodes?: SplicerNode[]; routes?: Record<string, RoutePlan>; cyclePayments?: CyclePayments };
         if (saveSeq.current !== seq) return;
         if (data.updatedAt && data.nodes?.length) {
           revisionRef.current = data.updatedAt;
@@ -316,8 +343,30 @@ export function SplicerProvider({ person, role, children, onLock }: { person: Cr
     [applyRemote, nodes, role, routePlans, showToast, syncRecords],
   );
 
+  const saveCyclePayment = useCallback(async (payee: "Daniel" | "Iván", start: string, payment: CyclePayment) => {
+    if (role !== "admin" || saving || !revisionRef.current) {
+      setError("Wait for the records to load. Only Daniel can record payments.");
+      return false;
+    }
+    const seq = ++saveSeq.current;
+    setSaving(true);
+    setError("");
+    try {
+      const response = await fetch("/api/cycle-payments", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ person: payee, start, ...payment, baseUpdatedAt: revisionRef.current }) });
+      const data = await response.json();
+      if (data.updatedAt && data.nodes) { revisionRef.current = data.updatedAt; applyRemote(data); }
+      if (!response.ok) throw new Error(data.error || "Couldn’t save the payment.");
+      showToast("Cycle payment saved");
+      return true;
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Couldn’t save the payment.");
+      return false;
+    } finally { if (saveSeq.current === seq) setSaving(false); }
+  }, [role, saving, applyRemote, showToast]);
+
   const replaceRecords = useCallback(
-    (nextNodes: SplicerNode[], nextRoutes: Record<string, RoutePlan>) => {
+    (nextNodes: SplicerNode[], nextRoutes: Record<string, RoutePlan>, nextPayments?: CyclePayments) => {
+      if (nextPayments !== undefined) setCyclePayments(nextPayments);
       setNodes(nextNodes);
       setRoutePlans(nextRoutes);
       writeStoredNodes(nextNodes);
@@ -328,7 +377,7 @@ export function SplicerProvider({ person, role, children, onLock }: { person: Cr
 
   const refresh = useCallback(() => {
     setToday(chicagoToday());
-    void fetch("/api/records")
+    void fetch("/api/records", { cache: "no-store" })
       .then(async (response) => {
         if (response.status === 401) {
           onLock();
@@ -338,7 +387,7 @@ export function SplicerProvider({ person, role, children, onLock }: { person: Cr
           showToast("Couldn’t refresh");
           return;
         }
-        const data = (await response.json()) as { updatedAt?: string | null; nodes?: SplicerNode[]; routes?: Record<string, RoutePlan> };
+        const data = (await response.json()) as { updatedAt?: string | null; nodes?: SplicerNode[]; routes?: Record<string, RoutePlan>; cyclePayments?: CyclePayments };
         if (data.updatedAt && data.nodes?.length) {
           revisionRef.current = data.updatedAt;
           applyRemote(data);
@@ -401,9 +450,13 @@ export function SplicerProvider({ person, role, children, onLock }: { person: Cr
     setError,
     toast,
     showToast,
+    preferences,
+    updatePreferences,
     dark,
     toggleTheme,
     saveChanges,
+    cyclePayments,
+    saveCyclePayment,
     routePlans,
     saveRoute,
     replaceRecords,

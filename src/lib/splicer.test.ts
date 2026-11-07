@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { memberByPin } from "./crew.server.ts";
 import { judgeAttempt, readToken, signToken } from "./session.server.ts";
-import { billingPeriod, billingWeeks, buildDayRoute, completedBetween, csvFor, expectedPayDate, expectedPayNodes, mergeNodeEdit, mineNodes, payrollWeek, payableNodes, personalTotal, presentNodes, routeForDay, seedNodesList, shareAmount, weekBounds, type SplicerNode } from "./splicer.ts";
+import { billingPeriod, billingWeeks, buildDayRoute, completedBetween, csvFor, expectedPayDate, expectedPayNodes, mergeNodeEdit, mineNodes, payrollWeek, payableNodes, ROUTE_TARGETS, personalTotal, presentNodes, routeForDay, seedNodesList, shareAmount, weekBounds, type SplicerNode } from "./splicer.ts";
 
 function sample(code: string, lat: number, lng: number, status: SplicerNode["status"] = "pending"): SplicerNode {
   return {
@@ -201,7 +201,7 @@ test("live board totals stay at 97 completed and $30,800 generated", () => {
   assert.equal([...monday.Daniel, ...monday.Iván, ...monday.Chris].length, 0);
   const tuesday = routeForDay("2026-11-03", nodes, {});
   const assigned = [...tuesday.Daniel, ...tuesday.Iván, ...tuesday.Chris];
-  assert.equal(assigned.length, 18);
+  assert.equal(assigned.length, 13);
   assert.ok(assigned.every((code) => added.includes(code)));
   assert.equal(memberByPin("5796")?.id, "Daniel");
   assert.equal(memberByPin("6841")?.role, "splicer");
@@ -252,18 +252,18 @@ test("a session token fails closed", () => {
   assert.equal(judgeAttempt({ fails: 2, lockedUntil: 0 }, true, 0).state.fails, 0);
 });
 
-test("each person gets at most six nearby stops, and unfinished stops stay first", () => {
+test("each person gets the 5/5/3 nearby stops, and unfinished stops stay first", () => {
   const west = Array.from({ length: 6 }, (_, index) => sample(`W${index}`, 30.6, -96.7 - index * 0.01));
   const mid = Array.from({ length: 6 }, (_, index) => sample(`M${index}`, 30.62, -96.35 - index * 0.01));
   const east = Array.from({ length: 6 }, (_, index) => sample(`E${index}`, 30.58, -96.05 - index * 0.01));
   const nodes = [...west, ...mid, ...east];
   const first = buildDayRoute("2026-11-03", nodes, null);
   for (const person of ["Daniel", "Iván", "Chris"] as const) {
-    assert.ok(first[person].length <= 6);
+    assert.equal(first[person].length, ROUTE_TARGETS[person]);
   }
   const assigned = [...first.Daniel, ...first.Iván, ...first.Chris];
   assert.equal(new Set(assigned).size, assigned.length);
-  assert.equal(assigned.length, 18);
+  assert.equal(assigned.length, 13);
 
   const previous = {
     day: "2026-11-03",
@@ -276,9 +276,9 @@ test("each person gets at most six nearby stops, and unfinished stops stay first
   const extra = Array.from({ length: 4 }, (_, index) => sample(`N${index}`, 30.581, -96.02 - index * 0.01));
   const second = buildDayRoute("2026-11-04", [...nextNodes, ...extra], previous);
   assert.deepEqual(second.Chris.slice(0, 2), ["E0", "E1"]);
-  assert.equal(second.Chris.length, 6);
+  assert.equal(second.Chris.length, 3);
   assert.ok(second.Chris.slice(2).every((code) => code.startsWith("N")));
-  assert.deepEqual(second.Daniel, ["W0", "W1", "W2", "W3", "W4", "W5"]);
+  assert.deepEqual(second.Daniel, ["W0", "W1", "W2", "W3", "W4"]);
 
   const chained = routeForDay("2026-11-04", [...nextNodes, ...extra], { "2026-11-03": previous });
   assert.deepEqual(chained.Chris.slice(0, 2), ["E0", "E1"]);

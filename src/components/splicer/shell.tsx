@@ -18,6 +18,7 @@ import {
   Receipt,
   RefreshCw,
   Sun,
+  Settings,
   Wallet,
   X,
 } from "lucide-react";
@@ -27,6 +28,8 @@ import {
   crewById,
   downloadCsv,
   expectedPayNodes,
+  expectedWeeklyAmount,
+  billingWeeks,
   formatShort,
   money,
   payableNodes,
@@ -38,21 +41,23 @@ import { WeekCharts } from "./calendar";
 import { useSplicer } from "./provider";
 
 const NAV: { id: TabId; label: string; icon: typeof CalendarDays }[] = [
-  { id: "today", label: "Today", icon: Navigation },
+  { id: "overview", label: "Overview", icon: Navigation },
   { id: "calendar", label: "Calendar", icon: CalendarDays },
   { id: "nodes", label: "Nodes", icon: Layers },
   { id: "routes", label: "Route", icon: MapPin },
   { id: "billing", label: "Billing", icon: Receipt },
   { id: "stats", label: "Stats", icon: BarChart3 },
+  { id: "settings", label: "Settings", icon: Settings },
 ];
 
 const TABS: { id: TabId; label: string }[] = [
-  { id: "today", label: "Today" },
+  { id: "overview", label: "Overview" },
   { id: "calendar", label: "Calendar" },
   { id: "nodes", label: "All nodes" },
   { id: "routes", label: "Map & route" },
   { id: "billing", label: "Billing & payments" },
   { id: "stats", label: "Stats" },
+  { id: "settings", label: "Settings" },
 ];
 
 export function Shell({ children }: { children: React.ReactNode }) {
@@ -61,25 +66,27 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const active = activeNodes(splicer.nodes);
   const completed = active.filter((node) => node.status === "completed");
   const mine = payableNodes(splicer.nodes, splicer.person);
-  const paid = mine.filter((node) => node.paidDate);
+  const personalWeeks = billingWeeks(splicer.nodes, splicer.today, splicer.person, splicer.cyclePayments);
+  const balance = personalWeeks.reduce((sum, week) => sum + week.receivable, 0);
   const partner = splicer.person !== "Chris";
   const open = active.filter((node) => node.status !== "completed");
   const progress = active.length ? (completed.length / active.length) * 100 : 0;
   const bounds = weekBounds(splicer.today);
   const weekDone = completedBetween(splicer.nodes, bounds.start, bounds.end);
-  const payableThisWeek = expectedPayNodes(splicer.nodes, splicer.today, splicer.person);
+  const payableThisWeek = expectedPayNodes(splicer.nodes, splicer.today, splicer.person, splicer.cyclePayments);
   const estimatedPayDates = payableThisWeek.filter((node) => !node.payDate).length;
   const weekLabel = `${formatShort(bounds.start)}–${formatShort(bounds.end)}`;
   const titles: Record<TabId, [string, string]> = {
-    today: [
-      "Today's route.",
+    overview: [
+      "Your operation, at a glance.",
       weekDone.length
         ? `${weekDone.length} finished this billing week (${weekLabel}). ${completed.length} all time.`
         : `0 finished this billing week (${weekLabel}). ${completed.length} all time, from earlier weeks.`,
     ],
     calendar: ["Your work, on the calendar.", "The week is the working view. The month is there when you need it."],
-    routes: ["The day, stop by stop.", "Six stops each, grouped by how close the nodes are."],
+    routes: ["The day, stop by stop.", "Daniel 5 · Iván 5 · Chris 3 stops, grouped by proximity."],
     nodes: ["Every node, in one place.", "Maps, locations, and who finished each assignment."],
+    settings: ["Make Strand yours.", "Personalize this profile’s display and navigation."],
     stats: ["Production, side by side.", "Compare completed nodes for Daniel, Iván, and Chris by completion date."],
     billing: splicer.person === "Chris"
       ? [`Your production, ${profile.name}.`, "Your completed nodes, grouped by completion date."]
@@ -151,6 +158,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
           <span className="sync">
             <span className="live-dot" /> Saved and backed up
+            <button className="theme-toggle" aria-label="Open settings" title="Settings" onClick={() => splicer.setTab("settings")}><Settings size={17} /></button>
             <button className="theme-toggle" aria-label={splicer.dark ? "Light mode" : "Dark mode"} aria-pressed={splicer.dark} title={splicer.dark ? "Light mode" : "Dark mode"} onClick={splicer.toggleTheme}>
               {splicer.dark ? <Sun size={17} /> : <Moon size={17} />}
             </button>
@@ -182,7 +190,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               </button>
             </div>
           ) : null}
-          {splicer.tab === "today" || splicer.tab === "stats" ? null : (
+          {splicer.tab === "stats" || splicer.tab === "settings" ? null : (
           <div className="stats">
             <div className="stat">
               <span>
@@ -215,10 +223,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <Clock size={18} />
               </span>
               <strong>
-                {partner ? money(personalTotal(payableThisWeek, splicer.person)) : weekDone.filter((node) => node.completedBy === "Chris").length}
+                {partner ? money(expectedWeeklyAmount(splicer.nodes, splicer.today, splicer.person, splicer.cyclePayments)) : weekDone.filter((node) => node.completedBy === "Chris").length}
                 <em>{partner ? "USD" : "nodes"}</em>
               </strong>
-              <small>{partner ? <>{formatShort(bounds.start)}–{formatShort(bounds.end)} · {payableThisWeek.length} unpaid nodes scheduled. {estimatedPayDates ? `${estimatedPayDates} use estimated payment dates.` : "Based on scheduled payment dates."}</> : <>{weekLabel} · Completed in your name.</>}</small>
+              <small>{partner ? <>{formatShort(bounds.start)}–{formatShort(bounds.end)} · {payableThisWeek.length} nodes in this week’s schedule. {estimatedPayDates ? `${estimatedPayDates} use estimated payment dates.` : "Scheduled dates, less recorded cycle payments."}</> : <>{weekLabel} · Completed in your name.</>}</small>
             </div>
             <div className="stat green">
               <span>
@@ -230,7 +238,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <em>{partner ? "USD" : "nodes"}</em>
               </strong>
               <small>
-                {partner ? <>{money(personalTotal(splicer.nodes, splicer.person, false))} still to collect · {paid.length} paid</> : "Your recorded completions across all dates."}
+                {partner ? <>{money(balance)} still to collect · {personalWeeks.filter((week) => week.count && week.receivable === 0).length} cycles paid</> : "Your recorded completions across all dates."}
               </small>
             </div>
           </div>

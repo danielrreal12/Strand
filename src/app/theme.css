@@ -744,7 +744,7 @@ html[data-theme="dark"] .week-days button.selected {
 @media (max-width: 650px) {
   .shell nav {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 
   .shell nav button {

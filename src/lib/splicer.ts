@@ -2,7 +2,7 @@ import seedNodes from "@/data/nodes.json";
 
 export const PAY_PER_NODE = 350;
 export const NODES_KEY = "splicer-nodes-v3";
-export const STOPS_PER_DAY = 6;
+export const ROUTE_TARGETS: Record<CrewName, number> = { Daniel: 5, Iván: 5, Chris: 3 };
 export const SESSION_KEY = "splicer-session";
 export const ROUTES_KEY = "splicer-routes-v1";
 export const THEME_KEY = "splicer-theme";
@@ -12,7 +12,7 @@ export type NodeStatus = "pending" | "progress" | "completed" | "excluded";
 export type InvoiceStatus = "pending" | "sent" | "approved";
 export type ReviewStatus = "" | "review_data" | "check_reassignment";
 export type CalendarMode = "scheduled" | "start" | "due" | "completed" | "payment";
-export type TabId = "today" | "calendar" | "nodes" | "routes" | "billing" | "stats";
+export type TabId = "overview" | "calendar" | "nodes" | "routes" | "billing" | "stats" | "settings";
 export type CrewName = "Daniel" | "Iván" | "Chris";
 export type CrewRole = "admin" | "splicer";
 
@@ -50,6 +50,9 @@ export type SplicerNode = {
   billingIncluded?: boolean;
   completedBy?: CrewName | "";
 };
+
+export type CyclePayment = { amount: number; paidDate: string; notes: string };
+export type CyclePayments = Record<string, CyclePayment>;
 
 export type BillingWeek = {
   start: string;
@@ -101,7 +104,8 @@ export function money(amount: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+    maximumFractionDigits: 2,
   }).format(amount);
 }
 
@@ -173,7 +177,7 @@ export function billingPeriod(iso: string) {
   };
 }
 
-export function billingWeeks(nodes: SplicerNode[], today: string, viewer?: CrewName): BillingWeek[] {
+export function billingWeeks(nodes: SplicerNode[], today: string, viewer?: CrewName, payments: CyclePayments = {}): BillingWeek[] {
   const weeks = new Map<string, Omit<BillingWeek, "count" | "earned" | "received" | "receivable">>();
   const ensure = (iso: string) => {
     const period = billingPeriod(iso);
@@ -201,16 +205,18 @@ export function billingWeeks(nodes: SplicerNode[], today: string, viewer?: CrewN
         (a, b) => a.completed.localeCompare(b.completed) || a.code.localeCompare(b.code),
       );
       const earned = viewer ? ordered.reduce((sum, node) => sum + shareAmount(node, viewer), 0) : ordered.length * PAY_PER_NODE;
-      const received = viewer
+      const legacyReceived = viewer
         ? ordered.filter((node) => node.paidDate).reduce((sum, node) => sum + shareAmount(node, viewer), 0)
         : ordered.filter((node) => node.paidDate).length * PAY_PER_NODE;
+      const recorded = viewer ? payments[`${viewer}:${week.start}`] : undefined;
+      const received = recorded ? recorded.amount : legacyReceived;
       return {
         ...week,
         nodes: ordered,
         count: ordered.length,
         earned,
         received,
-        receivable: earned - received,
+        receivable: Math.max(0, earned - received),
       };
     });
 }
@@ -322,12 +328,29 @@ export function expectedPayDate(node: SplicerNode) {
   return node.payDate || (node.completed ? billingPeriod(node.completed).payDate : "");
 }
 
-export function expectedPayNodes(nodes: SplicerNode[], today: string, person: CrewName) {
+export function expectedPayNodes(nodes: SplicerNode[], today: string, person: CrewName, payments: CyclePayments = {}) {
   const week = weekBounds(today);
   return payableNodes(nodes, person).filter((node) => {
     const date = expectedPayDate(node);
-    return !node.paidDate && date >= week.start && date <= week.end;
+    const recorded = node.completed ? payments[`${person}:${billingPeriod(node.completed).start}`] : undefined;
+    return (!node.paidDate || recorded !== undefined) && date >= week.start && date <= week.end;
   });
+}
+
+export function expectedWeeklyAmount(nodes: SplicerNode[], today: string, person: CrewName, payments: CyclePayments = {}) {
+  if (person === "Chris") return 0;
+  const groups = new Map<string, number>();
+  for (const node of expectedPayNodes(nodes, today, person, payments)) {
+    if (!node.completed) continue;
+    const key = `${person}:${billingPeriod(node.completed).start}`;
+    groups.set(key, (groups.get(key) ?? 0) + shareAmount(node, person));
+  }
+  let total = 0;
+  for (const [key, amount] of groups) {
+    const payment = payments[key];
+    total += Math.max(0, amount - (payment ? payment.amount : 0));
+  }
+  return total;
 }
 
 export function completedBetween(nodes: SplicerNode[], start: string, end: string) {
@@ -606,9 +629,9 @@ export function normalizePlan(plan: Partial<RoutePlan> & { day: string }): Route
     });
   return {
     day: plan.day,
-    Daniel: take(plan.Daniel),
-    Iván: take(plan.Iván),
-    Chris: take(plan.Chris),
+    Daniel: take(plan.Daniel).slice(0, ROUTE_TARGETS.Daniel),
+    Iván: take(plan.Iván).slice(0, ROUTE_TARGETS.Iván),
+    Chris: take(plan.Chris).slice(0, ROUTE_TARGETS.Chris),
     saved: Boolean(plan.saved),
   };
 }
@@ -622,7 +645,7 @@ export function buildDayRoute(day: string, nodes: SplicerNode[], previous: Route
   if (previous) {
     const carried = normalizePlan(previous);
     for (const person of CREW) {
-      lists[person] = carried[person].filter((code) => byCode.has(code)).slice(0, STOPS_PER_DAY);
+      lists[person] = carried[person].filter((code) => byCode.has(code)).slice(0, ROUTE_TARGETS[person]);
     }
   }
   const taken = new Set(CREW.flatMap((person) => lists[person]));
@@ -639,11 +662,11 @@ export function buildDayRoute(day: string, nodes: SplicerNode[], previous: Route
   });
 
   let guard = 0;
-  while (pool.length && CREW.some((person) => lists[person].length < STOPS_PER_DAY) && guard < 400) {
+  while (pool.length && CREW.some((person) => lists[person].length < ROUTE_TARGETS[person]) && guard < 400) {
     guard += 1;
     const picks: { person: CrewName; index: number; distance: number }[] = [];
     for (const person of CREW) {
-      if (lists[person].length >= STOPS_PER_DAY) continue;
+      if (lists[person].length >= ROUTE_TARGETS[person]) continue;
       const anchor = centroid(lists[person], byCode);
       let bestIndex = -1;
       let bestDistance = Number.POSITIVE_INFINITY;
@@ -682,7 +705,7 @@ export function buildDayRoute(day: string, nodes: SplicerNode[], previous: Route
       centroid(head, byCode),
     ).map((node) => node.code);
     const unlocated = tail.filter((code) => !ordered.includes(code));
-    lists[person] = [...head, ...ordered, ...unlocated].slice(0, STOPS_PER_DAY);
+    lists[person] = [...head, ...ordered, ...unlocated].slice(0, ROUTE_TARGETS[person]);
   }
 
   return normalizePlan({ day, ...lists, saved: false });
@@ -690,7 +713,10 @@ export function buildDayRoute(day: string, nodes: SplicerNode[], previous: Route
 
 export function routeForDay(day: string, nodes: SplicerNode[], plans: Record<string, RoutePlan>, depth = 0): RoutePlan {
   const stored = plans[day] ? normalizePlan({ ...plans[day], day }) : null;
-  if (stored?.saved) return stored;
+  if (stored?.saved) {
+    const allowed = new Set(nodes.filter((node) => node.status !== "excluded" && (!node.start || node.start <= day)).map((node) => node.code));
+    return { ...stored, Daniel: stored.Daniel.filter((code) => allowed.has(code)), Iván: stored.Iván.filter((code) => allowed.has(code)), Chris: stored.Chris.filter((code) => allowed.has(code)) };
+  }
   if (depth >= 21) return buildDayRoute(day, nodes, null);
   const previous = routeForDay(addDays(day, -1), nodes, plans, depth + 1);
   return buildDayRoute(day, nodes, previous);

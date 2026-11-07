@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { currentSession } from "@/lib/session.server";
-import { readStore, sanitizeStore, writeStore } from "@/lib/store.server";
+import { readStore, sanitizeStore, writeStore, withStoreLock } from "@/lib/store.server";
 
 export async function GET() {
   await connection();
@@ -33,6 +33,10 @@ export async function POST(request: Request) {
   }
   const incoming = sanitizeStore(parsed);
   if (!incoming) return Response.json({ error: "That file isn’t a backup." }, { status: 400 });
-  const saved = await writeStore(incoming);
-  return Response.json(saved);
+  return withStoreLock(async () => {
+    const current = await readStore();
+    if (!(parsed && typeof parsed === "object" && "cyclePayments" in parsed)) incoming.cyclePayments = current?.cyclePayments ?? {};
+    const saved = await writeStore(incoming);
+    return Response.json(saved);
+  });
 }

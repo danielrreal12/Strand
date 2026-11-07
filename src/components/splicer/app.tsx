@@ -10,7 +10,8 @@ import { PinGate } from "./pin-gate";
 import { SplicerProvider, useSplicer } from "./provider";
 import { RoutesView } from "./routes";
 import { Shell } from "./shell";
-import { TodayView } from "./today";
+import { OverviewView } from "./overview";
+import { SettingsView } from "./settings";
 import { StatsView } from "./stats";
 
 type SignedIn = { id: CrewName; role: CrewRole };
@@ -47,12 +48,13 @@ function Board() {
   const { tab } = useSplicer();
   return (
     <Shell>
-      {tab === "today" ? <TodayView /> : null}
+      {tab === "overview" ? <OverviewView /> : null}
       {tab === "calendar" ? <CalendarView /> : null}
       {tab === "nodes" ? <NodesView /> : null}
       {tab === "routes" ? <RoutesView /> : null}
       {tab === "billing" ? <BillingView /> : null}
       {tab === "stats" ? <StatsView /> : null}
+      {tab === "settings" ? <SettingsView /> : null}
       <Modals />
     </Shell>
   );

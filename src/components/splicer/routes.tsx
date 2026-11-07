@@ -5,7 +5,7 @@ import { useSplicer } from "./provider";
 import {
   CREW,
   ROUTE_FOCUS_DAY,
-  STOPS_PER_DAY,
+  ROUTE_TARGETS,
   agendaDate,
   directionLegs,
   googleDirections,
@@ -183,7 +183,7 @@ function TeamRoute({ day, setDay, plan }: { day: string; setDay: (day: string) =
       <div className="panel route-toolbar">
         <div>
           <h2>Daniel, Iván, and Chris · Today’s routes</h2>
-          <p>{STOPS_PER_DAY} stops each · unfinished stops stay first the next day · Houston time</p>
+          <p>Daniel 5 · Iván 5 · Chris 3 stops · unfinished stops stay first the next day · Houston time</p>
         </div>
         <label>
           Work date
@@ -208,12 +208,12 @@ function TeamRoute({ day, setDay, plan }: { day: string; setDay: (day: string) =
           <strong className="ivan-label">● Iván · Orange</strong>
           <strong className="chris-label">● Chris · Teal</strong>
         </div>
-        <p className="route-help">Each route stays near itself. Unfinished stops from the day before stay at the front, then the nearest open nodes fill the list back to {STOPS_PER_DAY}. Dotted lines are the stop order. D, I, and C mark each person.</p>
+        <p className="route-help">Each route stays near itself. Unfinished stops from the day before stay at the front, then the nearest open nodes fill Daniel and Iván to 5 stops each, and Chris to 3. Dotted lines are the stop order. D, I, and C mark each person.</p>
       </div>
       <div className="panel team-status">
         <strong>{plan.saved ? "Saved for the crew" : "Preview · Not saved yet"}</strong>
         <p>
-          {CREW.map((person) => `${person} ${plan[person].length}/${STOPS_PER_DAY}`).join(" · ")}. Open nodes still waiting: {splicer.nodes.filter((node) => node.status !== "completed" && node.status !== "excluded").length}.
+          {CREW.map((person) => `${person} ${plan[person].length}/${ROUTE_TARGETS[person]}`).join(" · ")}. Open nodes still waiting: {splicer.nodes.filter((node) => node.status !== "completed" && node.status !== "excluded").length}.
         </p>
         {splicer.role === "admin" ? (
         <>
@@ -264,7 +264,7 @@ function TeamRoute({ day, setDay, plan }: { day: string; setDay: (day: string) =
         <CrewCard title="Iván" className="crew-card-ivan" nodes={ivan} />
         <CrewCard title="Chris" className="crew-card-chris" nodes={chris} />
       </div>
-      <p className="route-help">Completed stops drop off the active route and that person’s next day fills back to {STOPS_PER_DAY} from the nearest open nodes. With only one open node, the other two routes stay empty until more work is assigned.</p>
+      <p className="route-help">Completed stops drop off the active route and that person’s next day fills to its daily target from the nearest open nodes. With only one open node, the other two routes stay empty until more work is assigned.</p>
     </>
   );
 }

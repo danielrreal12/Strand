@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { CyclePaymentEditor } from "./cycle-payment";
 import { ArrowUpRight, Wallet } from "lucide-react";
 import { useSplicer } from "./provider";
 import { PersonalProductionView } from "./personal-production";
@@ -21,18 +23,13 @@ export function BillingView() {
 
 function PartnerBillingView() {
   const splicer = useSplicer();
-  const profile = crewById(splicer.person);
-  const partner = splicer.person !== "Chris";
-  const own = payableNodes(splicer.nodes, splicer.person);
-  const weeks = billingWeeks(splicer.nodes, splicer.today, splicer.person);
+  const [selectedPerson, setSelectedPerson] = useState<"Daniel" | "Iván">(splicer.person === "Iván" ? "Iván" : "Daniel");
+  const viewer: "Daniel" | "Iván" = splicer.role === "admin" ? selectedPerson : "Iván";
+  const profile = crewById(viewer);
+  const partner = true;
+  const own = payableNodes(splicer.nodes, viewer);
+  const weeks = billingWeeks(splicer.nodes, splicer.today, viewer, splicer.cyclePayments);
   const completed = own.filter((node) => node.status === "completed");
-  const receivable = completed.filter((node) => !node.paidDate);
-  const byPay = receivable.reduce<Record<string, typeof receivable>>((groups, node) => {
-    const key = node.payDate || "No date";
-    groups[key] ??= [];
-    groups[key].push(node);
-    return groups;
-  }, {});
   const byDay = completed.reduce<Record<string, typeof completed>>((groups, node) => {
     if (!node.completed) return groups;
     groups[node.completed] ??= [];
@@ -59,17 +56,18 @@ function PartnerBillingView() {
   async function restoreBackup(file: File) {
     const raw = await file.text();
     const response = await fetch("/api/backup", { method: "POST", headers: { "Content-Type": "application/json" }, body: raw });
-    const data = (await response.json().catch(() => ({}))) as { error?: string; nodes?: typeof splicer.nodes; routes?: typeof splicer.routePlans };
+    const data = (await response.json().catch(() => ({}))) as { error?: string; nodes?: typeof splicer.nodes; routes?: typeof splicer.routePlans; cyclePayments?: typeof splicer.cyclePayments };
     if (!response.ok || !data.nodes) {
       splicer.showToast(data.error || "Couldn’t restore that file");
       return;
     }
-    splicer.replaceRecords(data.nodes, data.routes ?? {});
+    splicer.replaceRecords(data.nodes, data.routes ?? {}, data.cyclePayments ?? {});
     splicer.showToast("Backup restored");
   }
 
   return (
     <>
+    {splicer.role === "admin" ? <section className="panel workspace-panel"><label className="workspace-heading">Billing for<select aria-label="Billing for" value={viewer} onChange={(event) => setSelectedPerson(event.target.value as "Daniel" | "Iván")}><option value="Daniel">Daniel</option><option value="Iván">Iván</option></select></label></section> : null}
     <section className="panel records-panel">
       {splicer.role === "admin" ? (
         <>
@@ -103,12 +101,12 @@ function PartnerBillingView() {
         <div className="panel-heading">
           <div>
             <h2>Your billing by week</h2>
-            <p>{profile.name} · half of each day’s $350 nodes with {splicer.person === "Daniel" ? "Iván" : "Daniel"}</p>
+            <p>{profile.name} · half of each day’s $350 nodes with {viewer === "Daniel" ? "Iván" : "Daniel"}</p>
           </div>
         </div>
         <p className="production-rule">
           {partner
-            ? `This is your half of the company week. The other board shows the full $350 total for you and ${splicer.person === "Daniel" ? "Iván" : "Daniel"}; this tab is your $175. Chris’s nodes stay separate. A billing week runs Friday through Thursday.`
+            ? `This is your half of the company week. The other board shows the full $350 total for you and ${viewer === "Daniel" ? "Iván" : "Daniel"}; this tab is your $175. Chris’s nodes stay separate. A billing week runs Friday through Thursday.`
             : "Production is counted by completion date."}
         </p>
         <div className="table-scroll">
@@ -121,7 +119,7 @@ function PartnerBillingView() {
                 <th>GENERATED USD</th>
                 <th>RECEIVED USD</th>
                 <th>TO COLLECT USD</th>
-                <th>CUT STATUS</th>
+                <th>CYCLE / PAYMENT</th>
               </tr>
             </thead>
             <tbody>
@@ -142,6 +140,9 @@ function PartnerBillingView() {
                     <span className={`pill ${week.end < splicer.today ? "completed" : "progress"}`}>
                       {week.start > splicer.today ? "Upcoming" : week.end < splicer.today ? "Cut closed" : "In progress"}
                     </span>
+                    <span className="cycle-payment-status">{!week.count ? "No production" : week.received >= week.earned ? "Fully paid" : week.received > 0 ? "Partially paid" : "Unpaid"}</span>
+                    {splicer.cyclePayments[`${viewer}:${week.start}`]?.paidDate ? <small className="sub">Received {formatShort(splicer.cyclePayments[`${viewer}:${week.start}`].paidDate)}</small> : null}
+                    {splicer.role === "admin" && week.earned > 0 ? <details className="payment-action"><summary>Update payment</summary><CyclePaymentEditor key={`${viewer}:${week.start}:${week.received}`} person={viewer} week={week} payment={splicer.cyclePayments[`${viewer}:${week.start}`]} /></details> : null}
                   </td>
                 </tr>
               ))}
@@ -180,7 +181,7 @@ function PartnerBillingView() {
                           <td>{formatShort(node.completed)}</td>
                           <td>{formatShort(node.payDate)}</td>
                           <td>{node.paidDate ? formatShort(node.paidDate) : "Pending"}</td>
-                          <td className="amount">{money(shareAmount(node, splicer.person))}</td>
+                          <td className="amount">{money(shareAmount(node, viewer))}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -204,56 +205,8 @@ function PartnerBillingView() {
             ))}
         </div>
       </section>
-      <section className="panel">
-        <div className="panel-heading">
-          <div>
-            <h2>Your upcoming payments</h2>
-            <p>What you’ll receive, grouped by date.</p>
-          </div>
-          <button className="text-button" onClick={() => splicer.openBatch({ mode: "payment", codes: receivable.map((node) => node.code) })}>
-            Set date <ArrowUpRight size={16} />
-          </button>
-        </div>
-        {Object.keys(byPay).length ? (
-          Object.entries(byPay)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([day, group]) => (
-              <div className="payment-group" key={day}>
-                <div className="payment-day">
-                  <span className="payment-icon">
-                    <Wallet size={20} />
-                  </span>
-                  <div>
-                    <strong>{day === "No date" ? "No pay date" : new Date(`${day}T12:00:00`).toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" })}</strong>
-                    <small>
-                      {group.length} nodes · {day !== "No date" && day < splicer.today ? "Expected pay overdue" : "Waiting to be received"}
-                    </small>
-                  </div>
-                  <strong>{money(group.reduce((sum, node) => sum + shareAmount(node, splicer.person), 0))}</strong>
-                </div>
-                <div className="chips">
-                  {group.map((node) => (
-                    <button key={node.code} onClick={() => splicer.setEditing({ ...node })}>
-                      {node.code}
-                    </button>
-                  ))}
-                </div>
-                <button className="text-button" onClick={() => splicer.openBatch({ mode: "received", codes: group.map((node) => node.code) })}>
-                  Record payment received
-                </button>
-              </div>
-            ))
-        ) : (
-          <div className="empty">
-            <Wallet size={30} />
-            <strong>Your payments will show up here</strong>
-            <p>
-              Log a completed node in your name
-              <br />
-              and set the date you’ll be paid.
-            </p>
-          </div>
-        )}
+      <section className="panel"><div className="panel-heading"><div><h2>Outstanding cycle balances</h2><p>Remaining amounts after recorded full or partial payments.</p></div></div>
+        {weeks.some((week) => week.receivable > 0) ? weeks.filter((week) => week.receivable > 0).map((week) => <div className="payment-group" key={week.start}><div className="payment-day"><span className="payment-icon"><Wallet size={20} /></span><div><strong>{formatShort(week.start)}–{formatShort(week.end)}</strong><small>Scheduled {formatShort(week.payDate)} · Received {money(week.received)}</small></div><strong>{money(week.receivable)}</strong></div><p className="sub">{week.received ? "Partially paid" : "Unpaid"} · {week.count} nodes in this cycle</p></div>) : <div className="empty">No outstanding cycle balances.</div>}
       </section>
       <section className="panel production">
         <div className="panel-heading">
@@ -273,7 +226,7 @@ function PartnerBillingView() {
                 </div>
                 <span>
                   {group.length} nodes
-                  <strong>{money(group.reduce((sum, node) => sum + shareAmount(node, splicer.person), 0))}</strong>
+                  <strong>{money(group.reduce((sum, node) => sum + shareAmount(node, viewer), 0))}</strong>
                 </span>
               </div>
             ))
@@ -289,7 +242,7 @@ function PartnerBillingView() {
           </strong>
           <p>
             {partner
-              ? `Every node you or ${splicer.person === "Daniel" ? "Iván" : "Daniel"} finish is $350. That day’s total is split in half, so each node on this page is your $175.`
+              ? `Every node you or ${viewer === "Daniel" ? "Iván" : "Daniel"} finish is $350. That day’s total is split in half, so each node on this page is your $175.`
               : "Your production is tracked by completed node count."}
           </p>
         </div>
@@ -329,7 +282,7 @@ function PartnerBillingView() {
                   </td>
                   <td>{formatShort(node.payDate)}</td>
                   <td>{node.paidDate ? formatShort(node.paidDate) : "Pending"}</td>
-                  <td className="amount">{money(shareAmount(node, splicer.person))}</td>
+                  <td className="amount">{money(shareAmount(node, viewer))}</td>
                 </tr>
               ))}
             </tbody>

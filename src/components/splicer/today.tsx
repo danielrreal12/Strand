@@ -14,6 +14,7 @@ export function TodayView() {
   const next = nextIndex >= 0 ? stops[nextIndex] : null;
   const navigate = next ? driveTo(next) : "";
   const google = next ? googleDriveTo(next) : "";
+  const preferredNavigation = splicer.preferences.mapApp === "google" ? google : navigate;
   const upcoming = splicer.nodes
     .filter((node) => node.status !== "completed" && node.status !== "excluded" && node.start > splicer.today)
     .sort((a, b) => a.start.localeCompare(b.start) || a.code.localeCompare(b.code));
@@ -36,8 +37,8 @@ export function TodayView() {
               {next.gps ? ` · ${next.gps}` : " · Coordinates still coming"}
               {next.night ? " · Night cut" : ""}
             </p>
-            {navigate ? (
-              <a className="navigate" href={navigate}>
+            {preferredNavigation ? (
+              <a className="navigate" href={preferredNavigation}>
                 <Navigation size={18} />
                 Navigate
               </a>
@@ -115,7 +116,7 @@ export function TodayView() {
             <p>
               {nextStart
                 ? "These nodes stay off the list until the authorized start."
-                : "Finished stops drop off. The nearest open nodes fill the list back to six."}
+                : "Finished stops drop off. Nearby open nodes fill your daily target."}
             </p>
           </div>
         )}
