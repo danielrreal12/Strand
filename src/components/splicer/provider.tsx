@@ -20,6 +20,7 @@ import {
   writeStoredNodes,
   type CalendarMode,
   type CrewName,
+  type ProfileId,
   type CrewRole,
   type CyclePayments,
   type CyclePayment,
@@ -33,6 +34,8 @@ import { readPreferences, writePreferences, normalizePreferences, type Preferenc
 type BatchMode = "complete" | "schedule" | "payment" | "received";
 
 type SplicerState = {
+  accountId: ProfileId;
+  isMaster: boolean;
   person: CrewName;
   role: CrewRole;
   nodes: SplicerNode[];
@@ -95,11 +98,11 @@ export function useSplicer() {
   return value;
 }
 
-export function SplicerProvider({ person, role, children, onLock }: { person: CrewName; role: CrewRole; children: ReactNode; onLock: () => void }) {
+export function SplicerProvider({ person, accountId = person, role, children, onLock }: { person: CrewName; accountId?: ProfileId; role: CrewRole; children: ReactNode; onLock: () => void }) {
   const [nodes, setNodes] = useState<SplicerNode[]>(() => readStoredNodes());
   const [today, setToday] = useState(() => chicagoToday());
-  const [preferences, setPreferences] = useState<Preferences>(() => readPreferences(person));
-  const [tab, setTab] = useState<TabId>(() => readPreferences(person).defaultTab);
+  const [preferences, setPreferences] = useState<Preferences>(() => readPreferences(accountId));
+  const [tab, setTab] = useState<TabId>(() => readPreferences(accountId).defaultTab);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [calendarMode, setCalendarMode] = useState<CalendarMode>("scheduled");
@@ -161,10 +164,10 @@ export function SplicerProvider({ person, role, children, onLock }: { person: Cr
   const updatePreferences = useCallback((changes: Partial<Preferences>) => {
     setPreferences((current) => {
       const next = normalizePreferences({ ...current, ...changes });
-      writePreferences(person, next);
+      writePreferences(accountId, next);
       return next;
     });
-  }, [person]);
+  }, [accountId]);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
@@ -412,6 +415,8 @@ export function SplicerProvider({ person, role, children, onLock }: { person: Cr
   }, []);
 
   const value: SplicerState = {
+    accountId,
+    isMaster: accountId === "Master",
     person,
     role,
     nodes,

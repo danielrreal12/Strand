@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CyclePaymentEditor } from "./cycle-payment";
+import { MasterBillingSummary } from "./master";
 import { ArrowUpRight, Wallet } from "lucide-react";
 import { useSplicer } from "./provider";
 import { PersonalProductionView } from "./personal-production";
@@ -17,8 +18,8 @@ import {
 } from "@/lib/splicer";
 
 export function BillingView() {
-  const { person } = useSplicer();
-  return person === "Chris" ? <PersonalProductionView /> : <PartnerBillingView />;
+  const { person, isMaster } = useSplicer();
+  return isMaster ? <><MasterBillingSummary /><PartnerBillingView /></> : person === "Chris" ? <PersonalProductionView /> : <PartnerBillingView />;
 }
 
 function PartnerBillingView() {

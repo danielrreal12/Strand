@@ -1,13 +1,13 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { cookies } from "next/headers";
-import type { CrewName, CrewRole } from "./splicer";
+import type { ProfileId, CrewRole } from "./splicer";
 import { dataDir, sessionSecretFile } from "./paths.server";
 
 const COOKIE = "splicer_session";
 export const SESSION_DAYS = 7;
 
-export type SessionPayload = { id: CrewName; role: CrewRole; exp: number };
+export type SessionPayload = { id: ProfileId; role: CrewRole; exp: number };
 export type AttemptState = { fails: number; lockedUntil: number };
 
 let secretPromise: Promise<string> | null = null;
@@ -28,7 +28,8 @@ export function readToken(token: string, secret: string, now = Date.now()): Sess
   try {
     const payload = JSON.parse(Buffer.from(body, "base64url").toString()) as SessionPayload;
     if (!payload?.exp || payload.exp < now) return null;
-    if (payload.id !== "Daniel" && payload.id !== "Iván" && payload.id !== "Chris") return null;
+    if (payload.id !== "Daniel" && payload.id !== "Iván" && payload.id !== "Chris" && payload.id !== "Master") return null;
+    if (payload.id === "Master" && payload.role !== "admin") return null;
     if (payload.role !== "admin" && payload.role !== "splicer") return null;
     return payload;
   } catch {

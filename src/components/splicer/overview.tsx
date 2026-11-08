@@ -2,10 +2,12 @@
 import { CREW, ROUTE_TARGETS, routeForDay, weekBounds, completedBetween } from "@/lib/splicer";
 import { useSplicer } from "./provider";
 import { TodayView } from "./today";
+import { MasterOverview } from "./master";
 import "./workspace.css";
 
 export function OverviewView() {
   const s = useSplicer();
+  if (s.isMaster) return <MasterOverview />;
   const week = weekBounds(s.today);
   const done = completedBetween(s.nodes, week.start, s.today);
   const plan = routeForDay(s.today, s.nodes, s.routePlans);

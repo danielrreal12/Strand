@@ -3,9 +3,9 @@ import { currentSession } from "@/lib/session.server";
 import { applyRecordWrite, readStore, sanitizeStore, writeStore, withStoreLock } from "@/lib/store.server";
 import { presentNodes } from "@/lib/splicer";
 
-function visible(store: { updatedAt: string; nodes: Parameters<typeof presentNodes>[0]; routes: Record<string, unknown>; cyclePayments?: import("@/lib/splicer").CyclePayments } | null, role: "admin" | "splicer", id: "Daniel" | "Iván" | "Chris") {
+function visible(store: { updatedAt: string; nodes: Parameters<typeof presentNodes>[0]; routes: Record<string, unknown>; cyclePayments?: import("@/lib/splicer").CyclePayments } | null, role: "admin" | "splicer", id: "Daniel" | "Iván" | "Chris" | "Master") {
   if (!store) return { updatedAt: null, nodes: [], routes: {}, cyclePayments: {} };
-  return { updatedAt: store.updatedAt, nodes: presentNodes(store.nodes, role, id), routes: store.routes, cyclePayments: role === "admin" ? store.cyclePayments ?? {} : Object.fromEntries(Object.entries(store.cyclePayments ?? {}).filter(([key]) => key.startsWith(`${id}:`))) };
+  return { updatedAt: store.updatedAt, nodes: presentNodes(store.nodes, role, id === "Master" ? "Daniel" : id), routes: store.routes, cyclePayments: role === "admin" ? store.cyclePayments ?? {} : Object.fromEntries(Object.entries(store.cyclePayments ?? {}).filter(([key]) => key.startsWith(`${id}:`))) };
 }
 
 export async function GET() {
@@ -38,7 +38,7 @@ export async function PUT(request: Request) {
   if (current && baseUpdatedAt !== current.updatedAt) {
     return Response.json({ ...visible(current, session.role, session.id), error: "The records changed. Reloading." }, { status: 409 });
   }
-  const next = applyRecordWrite(current, incoming, session.role, session.id);
+  const next = applyRecordWrite(current, incoming, session.role, session.id === "Master" ? "Daniel" : session.id);
   const saved = await writeStore(next);
   return Response.json(visible(saved, session.role, session.id));
   });

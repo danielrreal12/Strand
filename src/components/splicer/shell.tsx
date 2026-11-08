@@ -62,7 +62,7 @@ const TABS: { id: TabId; label: string }[] = [
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const splicer = useSplicer();
-  const profile = crewById(splicer.person);
+  const profile = splicer.isMaster ? { name: "Master profile", initials: "MA", role: "All crew · Administrator" } : crewById(splicer.person);
   const active = activeNodes(splicer.nodes);
   const completed = active.filter((node) => node.status === "completed");
   const mine = payableNodes(splicer.nodes, splicer.person);
@@ -78,7 +78,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const weekLabel = `${formatShort(bounds.start)}–${formatShort(bounds.end)}`;
   const titles: Record<TabId, [string, string]> = {
     overview: [
-      "Your operation, at a glance.",
+      splicer.isMaster ? "Master overview." : "Your operation, at a glance.",
       weekDone.length
         ? `${weekDone.length} finished this billing week (${weekLabel}). ${completed.length} all time.`
         : `0 finished this billing week (${weekLabel}). ${completed.length} all time, from earlier weeks.`,
@@ -88,7 +88,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     nodes: ["Every node, in one place.", "Maps, locations, and who finished each assignment."],
     settings: ["Make Strand yours.", "Personalize this profile’s display and navigation."],
     stats: ["Production, side by side.", "Compare completed nodes for Daniel, Iván, and Chris by completion date."],
-    billing: splicer.person === "Chris"
+    billing: splicer.isMaster ? ["All crew billing.", "Daniel and Iván’s individual shares, cycle receipts, and remaining balances. Chris’s production stays counts-only."] : splicer.person === "Chris"
       ? [`Your production, ${profile.name}.`, "Your completed nodes, grouped by completion date."]
       : [`Your billing, ${profile.name}.`, "Your half of each day you and your partner finished. Chris’s pay stays off this tab."],
   };
@@ -190,7 +190,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               </button>
             </div>
           ) : null}
-          {splicer.tab === "stats" || splicer.tab === "settings" ? null : (
+          {splicer.tab === "stats" || splicer.tab === "settings" || splicer.isMaster ? null : (
           <div className="stats">
             <div className="stat">
               <span>
@@ -252,7 +252,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 </button>
               ))}
             </div>
-            <button className="text-button" onClick={() => downloadCsv(payableNodes(splicer.nodes, splicer.person), splicer.today, splicer.person)}>
+            <button className="text-button" onClick={() => downloadCsv(splicer.isMaster ? splicer.nodes : payableNodes(splicer.nodes, splicer.person), splicer.today, splicer.isMaster ? "master" : splicer.person)}>
               <Download size={16} /> Export my CSV
             </button>
           </div>

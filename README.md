@@ -51,3 +51,7 @@ Settings (including the top-right gear) saves theme, accent, density, default vi
 Daniel can record unpaid, partial, or full payments for his or Iván’s individual share of a billing cycle. Partial amounts include cents. Received amount, date, and notes are saved on Render and included in backups. These totals do not mark every individual node paid. Other profiles cannot edit cycle payments; each splicer sees only their own financial receipts. Chris continues to see production counts only.
 
 Stats has Daily, Weekly, Monthly, and All Time comparison views with charts.
+
+## Master profile
+
+PIN **0000** opens a separate Master administrator profile. Its Overview combines all three workers, their completion lists and routes, and Daniel’s and Iván’s individual cycle balances. Master can update both billing profiles, save routes, edit records, and manage backups. Master is not a worker and is not included in production counts or route allocation. Chris’s production remains counts-only.

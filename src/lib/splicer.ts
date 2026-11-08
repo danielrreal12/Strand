@@ -14,6 +14,7 @@ export type ReviewStatus = "" | "review_data" | "check_reassignment";
 export type CalendarMode = "scheduled" | "start" | "due" | "completed" | "payment";
 export type TabId = "overview" | "calendar" | "nodes" | "routes" | "billing" | "stats" | "settings";
 export type CrewName = "Daniel" | "Iván" | "Chris";
+export type ProfileId = CrewName | "Master";
 export type CrewRole = "admin" | "splicer";
 
 export const CREW: CrewName[] = ["Daniel", "Iván", "Chris"];
@@ -469,7 +470,12 @@ export function clearSession() {
   localStorage.removeItem(SESSION_KEY);
 }
 
-export function csvFor(nodes: SplicerNode[], viewer?: CrewName) {
+export function csvFor(nodes: SplicerNode[], viewer?: CrewName | "Master") {
+  if (viewer === "Master") {
+    const header = ["Node", "Status", "Completed", "Completed by", "Wise job", "Authorized start", "Due date", "Map PDF"];
+    const rows = nodes.map((node) => [node.code, STATUS_LABEL[node.status], node.completed, node.completedBy || "Not recorded", node.job, node.start, node.due, node.map]);
+    return `\uFEFF${[header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n")}`;
+  }
   if (viewer === "Chris") {
     const header = ["Node", "Status", "Authorized start", "Due date", "Completed", "Wise job", "Completed by", "Node count"];
     const rows = payableNodes(nodes, "Chris").map((node) => [node.code, STATUS_LABEL[node.status], node.start, node.due, node.completed, node.job, "Chris", "1"]);
@@ -526,7 +532,7 @@ function csvCell(value: string) {
 }
 
 export function downloadCsv(nodes: SplicerNode[], today: string, who = "billing") {
-  const blob = new Blob([csvFor(nodes, CREW.includes(who as CrewName) ? (who as CrewName) : undefined)], { type: "text/csv;charset=utf-8" });
+  const blob = new Blob([csvFor(nodes, who === "master" ? "Master" : CREW.includes(who as CrewName) ? (who as CrewName) : undefined)], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = `optimum-${who.toLowerCase()}-${today}.csv`;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { type CrewName, type CrewRole } from "@/lib/splicer";
+import { type ProfileId, type CrewRole } from "@/lib/splicer";
 import { BillingView } from "./billing";
 import { CalendarView } from "./calendar";
 import { Modals } from "./modals";
@@ -14,7 +14,7 @@ import { OverviewView } from "./overview";
 import { SettingsView } from "./settings";
 import { StatsView } from "./stats";
 
-type SignedIn = { id: CrewName; role: CrewRole };
+type SignedIn = { id: ProfileId; role: CrewRole };
 
 export function SplicerApp() {
   const [ready, setReady] = useState(false);
@@ -38,7 +38,7 @@ export function SplicerApp() {
   if (!session) return <PinGate onUnlock={(id, role) => setSession({ id, role })} />;
 
   return (
-    <SplicerProvider person={session.id} role={session.role} onLock={() => setSession(null)}>
+    <SplicerProvider person={session.id === "Master" ? "Daniel" : session.id} accountId={session.id} role={session.role} onLock={() => setSession(null)}>
       <Board />
     </SplicerProvider>
   );

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type { CrewName, CrewRole } from "@/lib/splicer";
+import type { ProfileId, CrewRole } from "@/lib/splicer";
 
-export function PinGate({ onUnlock }: { onUnlock: (person: CrewName, role: CrewRole) => void }) {
+export function PinGate({ onUnlock }: { onUnlock: (person: ProfileId, role: CrewRole) => void }) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -18,7 +18,7 @@ export function PinGate({ onUnlock }: { onUnlock: (person: CrewName, role: CrewR
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pin }),
       });
-      const data = (await response.json().catch(() => ({}))) as { id?: CrewName; role?: CrewRole; error?: string };
+      const data = (await response.json().catch(() => ({}))) as { id?: ProfileId; role?: CrewRole; error?: string };
       if (!response.ok || !data.id || !data.role) {
         setError(data.error || "Wrong access code.");
         setPin("");
